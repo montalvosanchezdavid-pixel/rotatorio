@@ -1,0 +1,2303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rotatorio://blog</title>
+<style>
+:root{
+  --bg:#0a0a0c;
+  --bg-panel:#101014;
+  --bg-elev:#16161b;
+  --border:#242430;
+  --text:#d4d4dc;
+  --text-dim:#7a7a88;
+  --accent:#00ff9c;
+  --accent2:#00c8ff;
+  --accent3:#ff6b6b;
+  --yellow:#ffd166;
+  --mono: 'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:14px;
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+::selection{background:var(--accent);color:#000;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:10px 18px;
+  background:rgba(10,10,12,0.9);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .logo{color:var(--accent);font-weight:700;letter-spacing:1px;flex-shrink:0;}
+.topbar .logo span{color:var(--text-dim);}
+.tabs{display:flex;gap:4px;flex:1 1 140px;min-width:140px;overflow-x:auto;}
+.tab-btn{
+  background:transparent;border:1px solid transparent;color:var(--text-dim);
+  padding:6px 14px;font-family:var(--mono);font-size:13px;cursor:pointer;
+  border-radius:4px 4px 0 0;white-space:nowrap;transition:.15s;flex-shrink:0;
+}
+.tab-btn:hover{color:var(--text);background:var(--bg-elev);}
+.tab-btn.active{color:var(--accent);border-color:var(--border);border-bottom-color:transparent;background:var(--bg-panel);}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.icon-btn{
+  background:var(--bg-elev);border:1px solid var(--border);color:var(--text-dim);
+  padding:6px 10px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:12px;
+  transition:.15s;
+}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);}
+.icon-btn.cloud{opacity:.5;cursor:not-allowed;}
+.icon-btn.cloud:hover{color:var(--text-dim);border-color:var(--border);}
+
+/* ---------- layout ---------- */
+.layout{display:flex;min-height:calc(100vh - 47px);}
+.sidebar{
+  width:340px;flex-shrink:0;
+  background:var(--bg-panel);
+  border-right:1px solid var(--border);
+  padding:14px 0;
+  height:calc(100vh - 47px);
+  overflow-y:auto;
+  position:sticky;top:47px;
+}
+.sidebar-title{
+  padding:0 16px 10px 16px;color:var(--text-dim);font-size:11px;
+  text-transform:uppercase;letter-spacing:2px;
+}
+.tree{list-style:none;margin:0;padding:0;}
+.tree li{position:relative;}
+.node{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 16px;cursor:pointer;color:var(--text);
+  font-size:13px;user-select:none;transition:.12s;
+  border-left:2px solid transparent;
+}
+.node:hover{background:var(--bg-elev);color:var(--accent);}
+.node.active{background:var(--bg-elev);color:var(--accent);border-left-color:var(--accent);}
+.node .caret{
+  width:10px;display:inline-block;color:var(--text-dim);transition:transform .15s;
+  font-size:10px;
+}
+.node.open > .caret{transform:rotate(90deg);}
+.node .bullet{color:var(--accent2);}
+.node.leaf .bullet{color:var(--yellow);}
+.children{list-style:none;margin:0;padding:0;max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.children.open{max-height:2000px;}
+.depth-1 > .node{padding-left:16px;font-weight:600;}
+.depth-2 > .node{padding-left:32px;}
+.depth-3 > .node{padding-left:48px;font-size:12.5px;}
+.depth-4 > .node{padding-left:64px;font-size:12px;color:var(--text-dim);}
+
+/* ---------- main content ---------- */
+.main{flex:1;min-width:0;padding:0;}
+.content-wrap{max-width:980px;margin:0 auto;padding:32px 40px 120px 40px;}
+.welcome{padding:60px 40px;max-width:820px;}
+.welcome h1{color:var(--accent);font-size:28px;}
+.welcome .prompt{color:var(--text-dim);}
+.welcome .prompt .path{color:var(--accent2);}
+
+.breadcrumb{color:var(--text-dim);font-size:12px;margin-bottom:10px;}
+.breadcrumb span{color:var(--accent2);}
+.section-header{
+  border-bottom:1px dashed var(--border);
+  padding-bottom:14px;margin-bottom:22px;
+  display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;
+}
+.section-header h2{
+  margin:0;color:var(--text);font-size:20px;
+  font-weight:600;
+}
+.section-header h2::before{content:"# ";color:var(--accent);}
+.section-tools{display:flex;gap:8px;}
+.section-tools button{
+  background:var(--bg-elev);border:1px solid var(--border);color:var(--text-dim);
+  padding:5px 10px;border-radius:4px;font-family:var(--mono);font-size:11px;cursor:pointer;
+}
+.section-tools button:hover{color:var(--accent);border-color:var(--accent);}
+.save-indicator{font-size:11px;color:var(--text-dim);opacity:0;transition:opacity .3s;}
+.save-indicator.show{opacity:1;color:var(--accent);}
+
+.editable{outline:none;}
+.editable:focus{background:rgba(0,255,156,0.03);border-radius:4px;}
+.content-body h3{color:var(--accent2);font-size:15px;margin:26px 0 8px 0;border-left:3px solid var(--accent2);padding-left:10px;}
+.content-body h4{color:var(--yellow);font-size:13.5px;margin:18px 0 6px 0;}
+.content-body p{margin:8px 0;color:var(--text);}
+.content-body ul,.content-body ol{margin:8px 0;padding-left:22px;}
+.content-body li{margin:4px 0;}
+.content-body .comment{color:var(--text-dim);font-style:italic;}
+.content-body code, .inline-code{
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:3px;
+  padding:1px 6px;color:var(--accent);font-size:12.5px;
+}
+.callout{
+  border:1px solid var(--border);border-left:3px solid var(--accent);
+  background:var(--bg-elev);padding:10px 14px;margin:14px 0;border-radius:4px;font-size:13px;
+}
+.callout.warn{border-left-color:var(--accent3);}
+.callout.warn .tag{color:var(--accent3);}
+.callout .tag{color:var(--accent);font-weight:700;margin-right:6px;}
+
+/* HEM badge — objetivos añadidos de otro índice */
+.hem-badge{
+  display:inline-block;background:rgba(255,209,102,0.12);border:1px solid var(--yellow);
+  color:var(--yellow);font-size:10px;font-weight:700;letter-spacing:1px;
+  padding:2px 7px;border-radius:3px;margin-right:8px;vertical-align:middle;
+}
+.node .hem-tag{
+  display:inline-block;background:rgba(255,209,102,0.12);border:1px solid var(--yellow);
+  color:var(--yellow);font-size:9px;font-weight:700;letter-spacing:0.5px;
+  padding:0px 4px;border-radius:3px;margin-left:6px;vertical-align:middle;
+}
+
+/* diagrams */
+.diagram-wrap{
+  margin:16px 0;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev);
+  padding:14px;text-align:center;
+}
+.diagram-wrap .diagram-caption{
+  color:var(--text-dim);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  text-align:left;margin-bottom:10px;
+}
+.diagram-wrap svg{max-width:100%;height:auto;}
+.diagram-wrap svg text{pointer-events:none;}
+.diagram-wrap .hit{cursor:pointer;transition:opacity .15s, filter .15s;}
+.diagram-wrap .hit:hover{opacity:0.28 !important;}
+.diagram-wrap .hit.active-part{opacity:0.38 !important;filter:drop-shadow(0 0 4px var(--accent));}
+.diagram-info{
+  margin-top:12px;padding:10px 14px;background:var(--bg-panel);border:1px solid var(--border);
+  border-radius:4px;font-size:12.5px;color:var(--text);text-align:left;min-height:20px;line-height:1.5;
+}
+.diagram-info strong{color:var(--accent2);}
+.flow-btn{
+  background:var(--bg-panel);border:1px solid var(--border);color:var(--text);
+  padding:6px 12px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:12px;
+  margin:4px 8px 4px 0;transition:.15s;
+}
+.flow-btn:hover{border-color:var(--accent);color:var(--accent);}
+.fa-step{text-align:left;}
+.fa-step p{margin:6px 0 10px 0;}
+
+/* tables */
+.table-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:6px;}
+table.itable{border-collapse:collapse;width:100%;font-size:12.5px;min-width:480px;}
+table.itable caption{
+  text-align:left;padding:8px 12px;color:var(--text-dim);background:var(--bg-elev);
+  border-bottom:1px solid var(--border);font-size:11px;letter-spacing:1px;text-transform:uppercase;
+}
+table.itable th{
+  background:#1a1a20;color:var(--accent2);text-align:left;padding:8px 10px;
+  border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+  white-space:nowrap;font-size:12px;
+}
+table.itable td{
+  padding:7px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+  color:var(--text);vertical-align:top;
+}
+table.itable tr:last-child td{border-bottom:none;}
+table.itable th:last-child, table.itable td:last-child{border-right:none;}
+table.itable td:hover, table.itable th:hover{background:rgba(0,255,156,0.05);}
+table.itable tbody tr:hover{background:rgba(0,200,255,0.03);}
+.table-controls{display:flex;gap:6px;padding:6px;background:var(--bg-elev);border-top:1px solid var(--border);}
+.table-controls button{
+  background:transparent;border:1px solid var(--border);color:var(--text-dim);
+  font-size:11px;padding:3px 9px;border-radius:3px;cursor:pointer;font-family:var(--mono);
+}
+.table-controls button:hover{color:var(--accent);border-color:var(--accent);}
+
+footer.appfoot{
+  text-align:center;color:var(--text-dim);font-size:11px;padding:30px;border-top:1px solid var(--border);
+}
+
+/* toast */
+#toast{
+  position:fixed;bottom:20px;right:20px;background:var(--bg-elev);border:1px solid var(--accent);
+  color:var(--accent);padding:10px 16px;border-radius:6px;font-size:12px;
+  transform:translateY(20px);opacity:0;transition:.25s;pointer-events:none;z-index:999;
+}
+#toast.show{transform:translateY(0);opacity:1;}
+
+@media (max-width:800px){
+  .layout{flex-direction:column;}
+  .sidebar{width:100%;height:auto;position:relative;top:0;max-height:340px;}
+  .content-wrap{padding:20px;}
+}
+
+@media (max-width:640px){
+  body{font-size:13px;}
+  .topbar{padding:8px 12px;gap:8px;}
+  .logo{font-size:13px;}
+  .tabs{flex-basis:100%;order:1;}
+  .top-actions{flex-basis:100%;order:2;flex-shrink:1;min-width:0;}
+  .icon-btn{padding:5px 8px;font-size:11px;}
+  .welcome{padding:30px 20px;}
+  .welcome h1{font-size:22px;}
+  .content-wrap{padding:16px 14px 80px 14px;}
+  .section-header{flex-direction:column;align-items:flex-start;gap:8px;}
+  table.itable{min-width:420px;font-size:12px;}
+  .diagram-wrap{padding:10px;}
+  .fa-step{overflow-x:hidden;}
+  .flow-btn{font-size:11px;padding:5px 9px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">rotatorio<span>@residente</span><span>:~$</span></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="top-actions">
+    <button class="icon-btn" id="editToggle" title="Activar/desactivar edición">✎ editar: OFF</button>
+    <button class="icon-btn" id="exportBtn" title="Descargar copia de seguridad de todas tus ediciones">💾 exportar</button>
+    <button class="icon-btn" id="importBtn" title="Restaurar ediciones desde una copia de seguridad">📂 importar</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+    <button class="icon-btn cloud" title="Próximamente: sincronización en la nube">☁ cloud (pronto)</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">// pestañas</div>
+    <ul class="tree" id="sectionTree"></ul>
+  </aside>
+
+  <main class="main">
+    <div id="welcome" class="welcome">
+      <h1>&gt; bienvenido/a</h1>
+      <p class="prompt">Selecciona <span class="path">NEFROLOGÍA</span> en el panel lateral y despliega el índice de la rotación para empezar a estudiar / editar.</p>
+      <p class="prompt">Haz click en <span class="path">✎ editar</span> arriba a la derecha para poder escribir directamente encima de cualquier apartado — se guarda automáticamente en este navegador (localStorage). Las tablas son interactivas: puedes añadir/eliminar filas y columnas, y editar cualquier celda.</p>
+    </div>
+    <div class="content-wrap" id="contentWrap" style="display:none;">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div class="section-header">
+        <h2 id="sectionTitle"></h2>
+        <div class="section-tools">
+          <span class="save-indicator" id="saveIndicator">✓ guardado</span>
+          <button id="resetBtn">↺ restaurar original</button>
+        </div>
+      </div>
+      <div class="content-body editable" id="sectionContent" contenteditable="false"></div>
+    </div>
+    <footer class="appfoot">rotatorio :: notas de guardia compiladas con &lt;3 — build local, sin conexión a la nube todavía</footer>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA: árbol de secciones + contenido
+   ========================================================= */
+const TABS = [
+  {id:'nefrologia', label:'NEFROLOGÍA'},
+  {id:'cardiologia', label:'CARDIOLOGÍA'},
+];
+
+// tree: cada nodo puede tener children[] o content (html string) si es hoja
+const TREE = {
+  nefrologia: {
+    title:'NEFROLOGÍA',
+    intro:true,
+    children: [
+      {id:'obj', title:'Objetivos de la rotación', leaf:true, content: () => OBJETIVOS},
+      {id:'t1', title:'1. Fracaso Renal Agudo (FRA)', children:[
+        {id:'t1a', title:'a. IRA pre-renal', leaf:true, content:()=>T1A},
+        {id:'t1b', title:'b. IRA renal (intrínseca)', leaf:true, content:()=>T1B},
+        {id:'t1c', title:'c. IRA post-renal', leaf:true, content:()=>T1C},
+      ]},
+      {id:'t2', title:'2. Enfermedad Renal Crónica', leaf:true, content:()=>T2},
+      {id:'t3', title:'3. Gasometría venosa', children:[
+        {id:'t3a', title:'a. Acidosis metabólica', leaf:true, content:()=>T3A},
+        {id:'t3b', title:'b. Alcalosis metabólica', leaf:true, content:()=>T3B},
+        {id:'t3c', title:'c. Trastornos mixtos', leaf:true, content:()=>T3C},
+      ]},
+      {id:'t4', title:'4. Trastornos hidroelectrolíticos', children:[
+        {id:'t4a', title:'a. Hiper/Hipopotasemia', leaf:true, content:()=>T4A},
+        {id:'t4b', title:'b. Hiponatremia', leaf:true, content:()=>T4B},
+        {id:'t4c', title:'c. Magnesio', leaf:true, content:()=>T4C},
+        {id:'t4d', title:'d. Hipo/Hipercalcemia', leaf:true, content:()=>T4D},
+      ]},
+      {id:'t5', title:'5. Sueroterapia', leaf:true, content:()=>T5},
+      {id:'t6', title:'6. Acceso vascular temporal', leaf:true, content:()=>T6},
+      {id:'t7', title:'7. Aféresis terapéutica', leaf:true, content:()=>T7},
+      {id:'t8', title:'8. Hemodiálisis aguda: indicaciones y complicaciones', leaf:true, content:()=>T8},
+      {id:'t9', title:'9. Síndrome de lisis tumoral', leaf:true, content:()=>T9},
+      {id:'t10', title:'10. Técnicas de depuración extrarrenal', children:[
+        {id:'t10a', title:'a. Hemodiálisis', children:[
+          {id:'t10ai', title:'i. Aguda', leaf:true, content:()=>T10Ai},
+          {id:'t10aii', title:'ii. Crónica', leaf:true, content:()=>T10Aii},
+        ]},
+        {id:'t10b', title:'b. Diálisis peritoneal (CAPD)', leaf:true, content:()=>T10B},
+      ]},
+      {id:'t11', title:'11. Fármacos en insuficiencia renal', leaf:true, content:()=>T11},
+      {id:'t12', title:'12. Trasplante renal', leaf:true, content:()=>T12},
+      {id:'t13', title:'13. Radiología en Nefrología: biopsia renal', leaf:true, content:()=>T13},
+      {id:'t14', title:'14. Regulación del metabolismo mineral', leaf:true, hem:true, content:()=>T14},
+      {id:'t15', title:'15. Hipertensión arterial (nefrológica)', leaf:true, hem:true, content:()=>T15},
+      {id:'t16', title:'16. Infecciones urinarias', leaf:true, hem:true, content:()=>T16},
+      {id:'t17', title:'17. Farmacología de diuréticos y antihipertensivos', leaf:true, hem:true, content:()=>T17},
+      {id:'t18', title:'18. Fármacos inmunosupresores', hem:true, children:[
+        {id:'t18a', title:'a. Manejo de drogas inmunosupresoras', leaf:true, hem:true, content:()=>T18A},
+        {id:'t18b', title:'b. Interacciones farmacológicas', leaf:true, hem:true, content:()=>T18B},
+      ]},
+    ]
+  },
+  cardiologia: {
+    title:'CARDIOLOGÍA',
+    intro:true,
+    children: [
+      {id:'cobj', title:'Objetivos / por qué le importa a hematología', leaf:true, content:()=>C_OBJ},
+      {id:'c1', title:'1. Lectura sistemática del ECG', children:[
+        {id:'c1a', title:'a. Ritmo y frecuencia', leaf:true, content:()=>C1A},
+        {id:'c1b', title:'b. Eje eléctrico', leaf:true, content:()=>C1B},
+        {id:'c1c', title:'c. Intervalos: PR, QRS, QT', leaf:true, content:()=>C1C},
+        {id:'c1d', title:'d. Ondas P, QRS y ST-T', leaf:true, content:()=>C1D},
+        {id:'c1e', title:'e. Patrones patológicos clave', leaf:true, content:()=>C1E},
+      ]},
+      {id:'c2', title:'2. Arritmias frecuentes', children:[
+        {id:'c2a', title:'a. Fibrilación auricular', leaf:true, content:()=>C2A},
+        {id:'c2b', title:'b. Taquicardias supraventriculares', leaf:true, content:()=>C2B},
+        {id:'c2c', title:'c. Bradiarritmias y bloqueos AV', leaf:true, content:()=>C2C},
+        {id:'c2d', title:'d. Arritmias ventriculares', leaf:true, content:()=>C2D},
+      ]},
+      {id:'c3', title:'3. Síndrome coronario agudo', leaf:true, content:()=>C3},
+      {id:'c4', title:'4. Insuficiencia cardiaca', leaf:true, content:()=>C4},
+      {id:'c5', title:'5. Cardiotoxicidad por quimio/radioterapia', leaf:true, content:()=>C5},
+      {id:'c6', title:'6. Amiloidosis cardiaca', leaf:true, content:()=>C6},
+      {id:'c7', title:'7. Derrame pericárdico y taponamiento', leaf:true, content:()=>C7},
+      {id:'c8', title:'8. Anticoagulación en el paciente onco-hematológico', leaf:true, content:()=>C8},
+      {id:'c9', title:'9. Biomarcadores cardiacos', leaf:true, content:()=>C9},
+      {id:'c10', title:'10. Hipertensión arterial', leaf:true, content:()=>C10},
+      {id:'c11', title:'11. Soplos, valvulopatías y endocarditis', leaf:true, content:()=>C11},
+    ]
+  }
+};
+
+/* =========================================================
+   CONTENIDO MÉDICO
+   ========================================================= */
+
+const OBJETIVOS = `
+<p class="comment">// objetivos generales de la rotación de residentes (Hematología) por Nefrología</p>
+<div class="callout"><span class="tag">OBJETIVO</span> Adquirir el manejo diagnóstico y terapéutico inicial de las principales urgencias y patologías nefrológicas que puede encontrar un residente de guardia, con especial foco en la interacción nefrología–hematología (mieloma, LLA/LMA con lisis tumoral, trasplante de progenitores, nefrotoxicidad de quimioterápicos, etc.).</p>
+<h3>Índice de contenidos</h3>
+<ol>
+<li>Fracaso renal agudo: pre-renal, renal y post-renal</li>
+<li>Enfermedad renal crónica: estadios, complicaciones, tratamiento</li>
+<li>Gasometría venosa: acidosis, alcalosis, trastornos mixtos</li>
+<li>Trastornos hidroelectrolíticos (K, Na, Mg, Ca)</li>
+<li>Sueroterapia</li>
+<li>Accesos vasculares para depuración extracorpórea</li>
+<li>Aféresis terapéutica</li>
+<li>Hemodiálisis aguda: indicaciones y complicaciones</li>
+<li>Síndrome de lisis tumoral</li>
+<li>Técnicas de depuración extrarrenal (HD aguda/crónica, DPCA)</li>
+<li>Fármacos en insuficiencia renal y ajuste de dosis</li>
+<li>Trasplante renal</li>
+<li>Radiología en nefrología: biopsia renal percutánea</li>
+</ol>
+<p>Usa el árbol de la izquierda para navegar por cada apartado. Activa el modo <span class="inline-code">✎ editar</span> para completar con tus propios apuntes, casos clínicos vistos en planta/guardia, o dudas pendientes.</p>
+`;
+
+const T1A = `
+<p class="comment">// IRA (injuria renal aguda) de causa pre-renal — hipoperfusión renal SIN daño estructural (potencialmente reversible)</p>
+<h3>Definición y estadiaje (KDIGO) — aplica a todo el apartado 1</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t1a-0">
+<caption>Criterios KDIGO de fracaso renal agudo</caption>
+<thead><tr><th>Estadio</th><th>Creatinina sérica</th><th>Diuresis</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>×1.5-1.9 el basal, o aumento ≥0.3 mg/dL en 48h</td><td>&lt;0.5 mL/kg/h durante 6-12h</td></tr>
+<tr><td>2</td><td>×2.0-2.9 el basal</td><td>&lt;0.5 mL/kg/h durante ≥12h</td></tr>
+<tr><td>3</td><td>×3 el basal, o Cr ≥4 mg/dL, o inicio de TRS</td><td>&lt;0.3 mL/kg/h durante ≥24h, o anuria ≥12h</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Fisiopatología</h3>
+<p>Disminución del flujo sanguíneo renal efectivo → caída del FG sin lesión del parénquima. El riñón "sano" responde activando el eje RAA, ADH y SNS para preservar la perfusión → <strong>oliguria con orina concentrada</strong> y ávida retención de Na⁺.</p>
+<h3>Causas principales</h3>
+<ul>
+<li><strong>Hipovolemia real:</strong> hemorragia, pérdidas digestivas (vómitos/diarrea), quemados, tercer espacio (pancreatitis, peritonitis), diuréticos excesivos.</li>
+<li><strong>Hipovolemia "efectiva" (bajo gasto o vasodilatación):</strong> ICC, cirrosis con ascitis (síndrome hepatorrenal), sepsis, shock distributivo.</li>
+<li><strong>Alteración de la autorregulación renal:</strong> AINEs (vasoconstricción de arteriola aferente), IECA/ARA-II (vasodilatación de arteriola eferente, especialmente peligroso en estenosis bilateral de la arteria renal), inhibidores de calcineurina.</li>
+<li>Estenosis de arteria renal / síndrome compartimental abdominal.</li>
+</ul>
+<h3>Diagnóstico</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t1a-1">
+<caption>Índices urinarios: pre-renal vs NTA (necrosis tubular aguda)</caption>
+<thead><tr><th>Parámetro</th><th>Pre-renal</th><th>NTA / renal</th></tr></thead>
+<tbody>
+<tr><td>Na⁺ urinario</td><td>&lt; 20 mEq/L</td><td>&gt; 40 mEq/L</td></tr>
+<tr><td>FeNa (fracción excreción Na)</td><td>&lt; 1%</td><td>&gt; 2%</td></tr>
+<tr><td>FeUrea (si diuréticos)</td><td>&lt; 35%</td><td>&gt; 50%</td></tr>
+<tr><td>Osmolaridad urinaria</td><td>&gt; 500 mOsm/kg</td><td>~300 (isostenuria)</td></tr>
+<tr><td>Densidad urinaria</td><td>&gt; 1020</td><td>~1010</td></tr>
+<tr><td>Urea/Creatinina plasmática</td><td>&gt; 40-100:1</td><td>&lt; 20:1 (~10-15:1)</td></tr>
+<tr><td>Sedimento</td><td>Normal / cilindros hialinos</td><td>Cilindros granulosos "en barro", células epiteliales</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">OJO</span> El FeNa pierde valor si el paciente ha recibido diuréticos recientemente (usar FeUrea en ese caso) y en pre-renal sobreañadida a ERC o glomerulonefritis con natriuresis obligada.</div>
+<h3>Manejo</h3>
+<ul>
+<li>Corregir la causa: fluidoterapia si hipovolemia real (cristaloides, valorar objetivos dinámicos de respuesta a volumen), tratar sepsis/ICC/cirrosis según corresponda.</li>
+<li>Retirar/ajustar fármacos nefrotóxicos y que alteran autorregulación (AINEs, IECA/ARA-II, diuréticos si excesivos).</li>
+<li>Si no se corrige la causa → evoluciona a NTA isquémica (pre-renal prolongada = causa más frecuente de IRA renal intrínseca).</li>
+</ul>
+`;
+
+const T1B = `
+<p class="comment">// IRA renal / intrínseca — lesión estructural del parénquima renal</p>
+<h3>Clasificación por localización</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t1b-1">
+<caption>Causas de IRA intrínseca por compartimento</caption>
+<thead><tr><th>Compartimento</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td>Tubular (más frecuente, ~85%)</td><td>Necrosis tubular aguda (NTA) isquémica o tóxica (contraste, aminoglucósidos, mioglobina, cisplatino, ácido úrico)</td></tr>
+<tr><td>Intersticial</td><td>Nefritis intersticial aguda (NIA) por fármacos (betalactámicos, AINEs, IBP, alopurinol), infecciosa, autoinmune</td></tr>
+<tr><td>Glomerular</td><td>Glomerulonefritis rápidamente progresiva, GN post-infecciosa, vasculitis ANCA, nefropatía IgA</td></tr>
+<tr><td>Vascular</td><td>Ateroembolia, trombosis/embolia arteria o vena renal, microangiopatía trombótica (SHU/PTT), crisis renal esclerodérmica</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Necrosis tubular aguda (NTA)</h3>
+<p>Causa más frecuente de IRA intrahospitalaria. Fases clásicas: <strong>inicio</strong> (evento lesivo) → <strong>mantenimiento</strong> (oligoanuria días-semanas, riesgo de sobrecarga/hiperK) → <strong>recuperación</strong> (poliuria por recuperación tubular incompleta, vigilar depleción de volumen y electrolitos).</p>
+<h4>Nefritis intersticial aguda (NIA)</h4>
+<ul>
+<li>Sospechar ante IRA + fiebre + rash + eosinofilia tras nuevo fármaco (aunque la tríada clásica es poco sensible).</li>
+<li>Sedimento: leucocituria, eosinofiluria (poco sensible/específica), cilindros leucocitarios.</li>
+<li>Tratamiento: retirar fármaco causal; corticoides si no mejora en días o biopsia lo confirma.</li>
+</ul>
+<h3>Estudio diagnóstico general</h3>
+<ul>
+<li>Sedimento urinario + proteinuria (cociente prot/creat u orina 24h).</li>
+<li>Ecografía renal (descartar obstrucción, valorar tamaño/ecogenicidad).</li>
+<li>Serologías/inmunología si sospecha glomerular: ANA, ANCA, anti-MBG, complemento, crioglobulinas, serologías VHB/VHC/VIH según contexto.</li>
+<li>Biopsia renal si diagnóstico incierto y cambia manejo (ver apartado 13).</li>
+</ul>
+<div class="callout"><span class="tag">NOTA</span> En pacientes hemato-oncológicos: pensar siempre en nefrotoxicidad por quimioterapia (cisplatino, ifosfamida, metotrexato a altas dosis), nefropatía por cadenas ligeras (mieloma - "cast nephropathy"), y microangiopatía trombótica asociada a fármacos (gemcitabina, inhibidores de VEGF, TPH).</div>
+`;
+
+const T1C = `
+<p class="comment">// IRA post-renal — obstrucción del tracto urinario</p>
+<h3>Claves</h3>
+<ul>
+<li>Requiere obstrucción bilateral (o unilateral sobre riñón único funcionante) para producir IRA.</li>
+<li>Causas: hiperplasia/cáncer de próstata, litiasis bilateral, coágulos, fibrosis retroperitoneal, masas pélvicas/adenopatías (frecuente en hemato-oncología: linfoma retroperitoneal, carcinomatosis).</li>
+<li>Clínica: anuria brusca alternando con poliuria (obstrucción intermitente), dolor lumbar, globo vesical.</li>
+</ul>
+<h3>Diagnóstico</h3>
+<ul>
+<li><strong>Ecografía renal</strong> de elección: dilatación pielocalicial (puede tardar en aparecer si obstrucción muy reciente o retroperitoneal englobando el uréter).</li>
+<li>Sondaje vesical diagnóstico-terapéutico si sospecha de retención urinaria baja.</li>
+<li>TC sin contraste si se sospecha litiasis o causa retroperitoneal.</li>
+</ul>
+<h3>Manejo</h3>
+<ul>
+<li>Desobstrucción: sondaje vesical, nefrostomía percutánea o catéter doble J según nivel de la obstrucción.</li>
+<li>Vigilar <strong>diuresis post-obstructiva</strong>: puede generar poliuria masiva por natriuresis/diuresis osmótica y pérdida de capacidad de concentración → riesgo de depleción de volumen y trastornos electrolíticos (reponer con cuidado, no siempre "mL a mL").</li>
+</ul>
+`;
+
+const T2 = `
+<p class="comment">// ERC — definición: alteraciones de estructura o función renal presentes &gt; 3 meses, con implicaciones para la salud</p>
+<h3>Definición y clasificación KDIGO</h3>
+<p>Se clasifica por <strong>FG (categorías G)</strong> y <strong>albuminuria (categorías A)</strong> — el pronóstico depende de ambas ("heatmap" KDIGO).</p>
+<div class="table-wrap"><table class="itable" data-table-id="t2-1">
+<caption>Estadios de FG (categorías G)</caption>
+<thead><tr><th>Estadio</th><th>FGe (mL/min/1.73m²)</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td>G1</td><td>≥ 90</td><td>Normal o alto (con daño renal para ser ERC)</td></tr>
+<tr><td>G2</td><td>60-89</td><td>Levemente disminuido</td></tr>
+<tr><td>G3a</td><td>45-59</td><td>Leve-moderado</td></tr>
+<tr><td>G3b</td><td>30-44</td><td>Moderado-grave</td></tr>
+<tr><td>G4</td><td>15-29</td><td>Grave</td></tr>
+<tr><td>G5</td><td>&lt; 15 (o diálisis)</td><td>Fallo renal</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="table-wrap"><table class="itable" data-table-id="t2-2">
+<caption>Categorías de albuminuria</caption>
+<thead><tr><th>Categoría</th><th>ACR (mg/g)</th><th>Descripción</th></tr></thead>
+<tbody>
+<tr><td>A1</td><td>&lt; 30</td><td>Normal a levemente aumentada</td></tr>
+<tr><td>A2</td><td>30-300</td><td>Moderadamente aumentada (antes "microalbuminuria")</td></tr>
+<tr><td>A3</td><td>&gt; 300</td><td>Muy aumentada / rango nefrótico si &gt;2200</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Complicaciones secundarias a ERC (a cribar activamente)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t2-3">
+<caption>Complicaciones y manejo básico</caption>
+<thead><tr><th>Complicación</th><th>Fisiopatología / hallazgo</th><th>Manejo inicial</th></tr></thead>
+<tbody>
+<tr><td>Anemia</td><td>Déficit de EPO ± ferropenia funcional</td><td>Hierro (objetivo ferritina &gt;100-200 y IST&gt;20%), AEE (eritropoyetina) si Hb&lt;10 tras corregir hierro</td></tr>
+<tr><td>Enfermedad óseo-mineral (CKD-MBD)</td><td>↓Vit D activa, ↓Ca, ↑P, hiperparatiroidismo secundario</td><td>Restricción de fósforo, quelantes de P, calcitriol/análogos, calcimiméticos si HPT2º severo</td></tr>
+<tr><td>Acidosis metabólica</td><td>↓excreción ácida y de amonio</td><td>Bicarbonato oral si HCO3⁻ &lt; 22 mEq/L (retrasa progresión)</td></tr>
+<tr><td>Hiperpotasemia</td><td>↓excreción distal de K</td><td>Dieta, diuréticos, resinas/quelantes de K si preciso, ajustar IECA/ARA-II/ahorradores de K</td></tr>
+<tr><td>HTA / sobrecarga de volumen</td><td>Retención de Na y agua, activación SRAA</td><td>Restricción de sal, diuréticos, IECA/ARA-II (nefroprotección)</td></tr>
+<tr><td>Malnutrición</td><td>Anorexia urémica, acidosis, inflamación</td><td>Valoración nutricional, ajuste de proteínas según estadio</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Manejo nutricional</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t2-4">
+<caption>Recomendaciones nutricionales orientativas por situación</caption>
+<thead><tr><th>Nutriente</th><th>ERC sin diálisis (G3-G5)</th><th>En hemodiálisis</th><th>En diálisis peritoneal</th></tr></thead>
+<tbody>
+<tr><td>Proteínas</td><td>0.55-0.6 g/kg/día (0.6-0.8 si diabetes), evitando desnutrición</td><td>1.0-1.2 g/kg/día (pérdidas durante la sesión)</td><td>1.2-1.3 g/kg/día (pérdidas peritoneales de proteínas)</td></tr>
+<tr><td>Energía</td><td>~30-35 kcal/kg/día</td><td>~30-35 kcal/kg/día</td><td>Contar las calorías absorbidas del propio líquido de diálisis (glucosa)</td></tr>
+<tr><td>Sodio</td><td>&lt;2 g/día (~5 g de sal)</td><td>Restricción para control de peso interdiálisis</td><td>Algo más flexible según diuresis residual</td></tr>
+<tr><td>Potasio / fósforo</td><td>Restringir si hiperK/hiperP</td><td>Restricción activa habitual + quelantes de fósforo</td><td>Restricción algo menos estricta (diálisis continua aclara mejor)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">OJO</span> La restricción proteica excesiva o mal supervisada es una causa evitable de malnutrición calórico-proteica en la ERC — debe ajustarse siempre con apoyo de nutrición/dietética y reevaluarse si hay pérdida de peso, hipoalbuminemia o sarcopenia.</div>
+<h3>Enfoque terapéutico general (retrasar progresión)</h3>
+<ul>
+<li><strong>Control de TA:</strong> objetivo individualizado (~120-130/80 mmHg según KDIGO 2021), IECA/ARA-II como primera línea si albuminuria (no combinar ambos).</li>
+<li><strong>iSGLT2</strong> (dapagliflozina/empagliflozina): nefroprotección independiente de diabetes, indicados si FGe ≥ 20-25 y albuminuria significativa.</li>
+<li><strong>Antagonistas no esteroideos del receptor mineralocorticoide</strong> (finerenona) en ERC diabética con albuminuria.</li>
+<li>Control glucémico y lipídico, evitar nefrotóxicos (AINEs, contraste sin premedicación/hidratación), ajustar fármacos a función renal.</li>
+<li>Vacunación (VHB, neumococo, gripe) y planificación precoz de TRS (terapia renal sustitutiva) si progresión hacia G4-G5.</li>
+</ul>
+`;
+
+const T3A = `
+<p class="comment">// gasometría venosa — acidosis metabólica</p>
+<h3>Aproximación sistemática</h3>
+<ol>
+<li>pH: &lt;7.35 → acidemia.</li>
+<li>HCO3⁻: &lt;22 mEq/L confirma componente metabólico.</li>
+<li>Calcular <strong>anion gap</strong>: AG = Na⁺ − (Cl⁻ + HCO3⁻). Normal ≈ 8-12 (corregir por albúmina: AG corregido = AG + 2.5 x (4 − albúmina g/dL)).</li>
+<li>Comprobar compensación respiratoria esperada (fórmula de Winters): pCO2 esperada = 1.5 x HCO3⁻ + 8 ± 2.</li>
+<li>Si AG elevado: calcular <strong>delta gap / delta ratio</strong> = (AG−12) / (24−HCO3⁻) para detectar trastorno mixto sobreañadido.</li>
+</ol>
+<div class="table-wrap"><table class="itable" data-table-id="t3a-1">
+<caption>Causas de acidosis metabólica</caption>
+<thead><tr><th>Con AG elevado ("MUDPILES")</th><th>Con AG normal (hiperclorémica)</th></tr></thead>
+<tbody>
+<tr><td>Metanol</td><td>Diarrea / pérdidas digestivas de HCO3⁻</td></tr>
+<tr><td>Uremia (ERC avanzada)</td><td>Acidosis tubular renal (ATR tipo 1, 2, 4)</td></tr>
+<tr><td>DKA (cetoacidosis diabética/alcohólica)</td><td>Ureterosigmoidostomía</td></tr>
+<tr><td>Propilenglicol / Paraldehído</td><td>Fármacos: acetazolamida, IECA/espironolactona (tipo 4)</td></tr>
+<tr><td>Isoniazida / hierro</td><td>Sueroterapia masiva con SSF (acidosis dilucional)</td></tr>
+<tr><td>Láctico (shock, sepsis, isquemia, metformina)</td><td></td></tr>
+<tr><td>Etilenglicol / Salicilatos</td><td></td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> Vigilar acidosis láctica tipo B en neoplasias hematológicas (linfomas de alta proliferación, leucemias) — efecto Warburg / infiltración hepática masiva; también acidosis por síndrome de lisis tumoral (ver apartado 9).</div>
+<h3>Tratamiento</h3>
+<ul>
+<li>Tratar la causa subyacente siempre en primer lugar.</li>
+<li>Bicarbonato IV: considerar si pH &lt; 7.1-7.2 o acidosis grave con inestabilidad hemodinámica (controvertido en láctica pura); en ATR y ERC crónica, suplementación oral crónica.</li>
+<li>Si acidosis grave refractaria + sobrecarga de volumen / IRA → hemodiálisis urgente.</li>
+</ul>
+`;
+
+const T3B = `
+<p class="comment">// gasometría venosa — alcalosis metabólica</p>
+<h3>Claves fisiopatológicas</h3>
+<p>Requiere un evento generador (pérdida de H⁺ o ganancia de HCO3⁻) <strong>y</strong> un mecanismo de mantenimiento (habitualmente depleción de volumen/Cl⁻ o hiperaldosteronismo) que impide al riñón excretar el exceso de bicarbonato.</p>
+<h3>Clasificación por Cl⁻ urinario</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t3b-1">
+<caption>Alcalosis metabólica según Cl urinario</caption>
+<thead><tr><th>Tipo</th><th>Cl⁻ urinario</th><th>Causas</th></tr></thead>
+<tbody>
+<tr><td>Cloro-sensible (responde a SSF)</td><td>&lt; 20 mEq/L</td><td>Vómitos, aspiración nasogástrica, diuréticos (fase previa), post-hipercapnia</td></tr>
+<tr><td>Cloro-resistente (no responde a SSF)</td><td>&gt; 20 mEq/L</td><td>Hiperaldosteronismo 1º, Sd. de Cushing, Sd. de Bartter/Gitelman, estenosis de arteria renal, uso activo de diuréticos</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Tratamiento</h3>
+<ul>
+<li>Cloro-sensible: reposición de volumen con SSF + ClK si hipopotasemia asociada; tratar causa (antieméticos, IBP si vómitos).</li>
+<li>Cloro-resistente: tratar causa endocrina; espironolactona/eplerenona si hiperaldosteronismo.</li>
+<li>Casos graves con inestabilidad (pH &gt;7.6): acetazolamida (aumenta excreción de HCO3⁻) o, si IRC/sobrecarga, diálisis con baño bajo en bicarbonato.</li>
+</ul>
+`;
+
+const T3C = `
+<p class="comment">// gasometría venosa — trastornos mixtos</p>
+<h3>Cómo sospechar un trastorno mixto</h3>
+<ul>
+<li>La compensación respiratoria/metabólica no cumple la fórmula esperada (Winters, etc.) → hay un segundo trastorno primario.</li>
+<li><strong>Delta gap (AG−12) vs Delta HCO3 (24−HCO3):</strong>
+  <ul>
+    <li>Delta ratio &lt; 1: acidosis mixta AG elevado + AG normal (hiperclorémica).</li>
+    <li>Delta ratio 1-2: acidosis metabólica pura con AG elevado.</li>
+    <li>Delta ratio &gt; 2: acidosis AG elevado + alcalosis metabólica sobreañadida (o acidosis respiratoria crónica).</li>
+  </ul>
+</li>
+<li>pH normal con HCO3⁻ y pCO2 claramente alterados en direcciones opuestas → sospechar trastorno mixto que se "compensa" mutuamente (p. ej. acidosis metabólica + alcalosis respiratoria).</li>
+</ul>
+<h3>Ejemplo práctico</h3>
+<div class="callout">Paciente con vómitos de repetición (alcalosis metabólica hipoclorémica) + sepsis con acidosis láctica: pH puede aparecer "casi normal" pese a trastornos graves subyacentes — siempre calcular AG y delta gap, no fiarse solo del pH.</div>
+<h3>Pasos resumen</h3>
+<ol>
+<li>pH primario (acidemia/alcalemia).</li>
+<li>Componente metabólico (HCO3) vs respiratorio (pCO2): ¿van en la misma dirección que el pH?</li>
+<li>Calcular AG (y corregir por albúmina).</li>
+<li>Calcular compensación esperada y delta gap.</li>
+<li>Concluir: trastorno simple vs mixto, y cuántos procesos coexisten.</li>
+</ol>
+`;
+
+const T4A = `
+<p class="comment">// trastornos del potasio</p>
+<div class="diagram-wrap">
+<div class="diagram-caption">// diagrama interactivo — manejo de agua/electrolitos por segmento de la nefrona (aplica a todo el apartado 4)</div>
+<svg viewBox="0 0 700 440" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- glomérulo / cápsula de Bowman -->
+  <g class="hit" data-title="Glomérulo y cápsula de Bowman" data-desc="Filtración del plasma a través de la membrana glomerular (barrera de tamaño y carga). Se filtran agua, electrolitos, glucosa, urea, creatinina... en condiciones normales no se filtran proteínas ni células." onclick="highlightPart(this)">
+    <circle cx="55" cy="58" r="42" fill="none" stroke="#c9a876" stroke-width="4" opacity="0.9"/>
+    <path d="M32,40 Q40,25 50,38 Q58,50 46,45 Q60,42 55,58 Q68,62 54,70 Q64,80 48,76 Q56,90 40,80 Q30,88 32,70 Q18,72 28,58 Q16,50 32,40 Z" fill="#d63384" opacity="0.75"/>
+    <circle cx="55" cy="58" r="42" fill="var(--text)" opacity="0"/>
+  </g>
+
+  <!-- tubo base (visual, no interactivo) -->
+  <path d="M97,58
+           C120,15 145,15 165,58
+           C185,101 210,101 230,58
+           C250,15 275,15 295,58
+           C310,85 320,95 330,100
+           L330,125
+           C330,190 336,250 336,300
+           C336,322 366,322 366,300
+           C366,250 372,190 372,125
+           L372,100
+           C382,95 392,85 407,58
+           C427,15 452,15 472,58
+           C492,101 517,101 537,58
+           C552,25 562,15 572,15
+           L572,40
+           C582,60 592,70 600,90
+           L600,380"
+        fill="none" stroke="#c9a876" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- ramas del conducto colector (visual) -->
+  <path d="M600,180 C625,170 645,155 668,140" fill="none" stroke="#c9a876" stroke-width="14" stroke-linecap="round"/>
+  <path d="M600,260 C625,250 645,235 668,220" fill="none" stroke="#c9a876" stroke-width="14" stroke-linecap="round"/>
+  <path d="M600,340 C625,330 645,315 668,300" fill="none" stroke="#c9a876" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="668" cy="140" r="6" fill="var(--yellow)"/>
+  <circle cx="668" cy="220" r="6" fill="var(--yellow)"/>
+  <circle cx="668" cy="300" r="6" fill="var(--yellow)"/>
+  <circle cx="600" cy="392" r="6" fill="var(--yellow)"/>
+
+  <!-- zonas clicables (mismo trazado, coloreadas, encima del tubo base) -->
+  <path class="hit" data-title="Túbulo contorneado proximal (PCT)" data-desc="Reabsorbe ~65% del Na⁺ y agua filtrados (de forma isotónica), casi toda la glucosa y aminoácidos, bicarbonato (vía anhidrasa carbónica) y fosfato. Diana de la acetazolamida (inhibe la anhidrasa carbónica)."
+    d="M97,58 C120,15 145,15 165,58 C185,101 210,101 230,58 C250,15 275,15 295,58 C310,85 320,95 330,100"
+    fill="none" stroke="var(--accent2)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.06" onclick="highlightPart(this)"/>
+
+  <path class="hit" data-title="Asa de Henle — rama descendente" data-desc="Permeable al agua, prácticamente impermeable a solutos: el agua sale hacia el intersticio medular hipertónico, concentrando el filtrado. Forma parte del mecanismo de contracorriente que genera el gradiente medular."
+    d="M330,100 L330,125 C330,190 336,250 336,300"
+    fill="none" stroke="var(--yellow)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.06" onclick="highlightPart(this)"/>
+
+  <path class="hit" data-title="Asa de Henle — rama ascendente gruesa" data-desc="Impermeable al agua ('segmento diluyente'). El cotransportador Na-K-2Cl (NKCC2) reabsorbe ~25% del Na⁺ filtrado. Diana de los diuréticos de asa (furosemida). Genera el gradiente eléctrico que impulsa la reabsorción paracelular de Mg²⁺ y Ca²⁺."
+    d="M336,300 C336,322 366,322 366,300 C372,250 372,190 372,125 L372,100"
+    fill="none" stroke="var(--accent)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.08" onclick="highlightPart(this)"/>
+
+  <path class="hit" data-title="Túbulo contorneado distal (DCT)" data-desc="El cotransportador Na-Cl (NCC) reabsorbe ~5% del Na⁺ filtrado. Sitio de reabsorción activa de Ca²⁺ regulada por PTH. Diana de las tiazidas — por eso pueden producir hipercalcemia leve e hiponatremia."
+    d="M372,100 C382,95 392,85 407,58 C427,15 452,15 472,58 C492,101 517,101 537,58 C552,25 562,15 572,15"
+    fill="none" stroke="var(--accent3)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.06" onclick="highlightPart(this)"/>
+
+  <g class="hit" data-title="Túbulo / conducto colector" data-desc="Células principales: reabsorben Na⁺ (canal ENaC, regulado por aldosterona) y secretan K⁺; reabsorben agua vía acuaporinas (reguladas por ADH). Células intercaladas: regulan el equilibrio ácido-base secretando H⁺ o HCO3⁻. Diana de los diuréticos ahorradores de K⁺ (amilorida, espironolactona) y de la desmopresina/ADH." onclick="highlightPart(this)">
+    <path d="M572,15 L572,40 C582,60 592,70 600,90 L600,380" fill="none" stroke="var(--text)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.05"/>
+    <path d="M600,180 C625,170 645,155 668,140" fill="none" stroke="var(--text)" stroke-width="18" stroke-linecap="round" opacity="0.05"/>
+    <path d="M600,260 C625,250 645,235 668,220" fill="none" stroke="var(--text)" stroke-width="18" stroke-linecap="round" opacity="0.05"/>
+    <path d="M600,340 C625,330 645,315 668,300" fill="none" stroke="var(--text)" stroke-width="18" stroke-linecap="round" opacity="0.05"/>
+  </g>
+
+  <text x="195" y="130" fill="var(--accent2)" font-size="13" text-anchor="middle" font-family="var(--mono)">PCT</text>
+  <text x="300" y="210" fill="var(--yellow)" font-size="11" text-anchor="middle" font-family="var(--mono)" transform="rotate(-90 300 210)">descendente</text>
+  <text x="403" y="210" fill="var(--accent)" font-size="11" text-anchor="middle" font-family="var(--mono)" transform="rotate(-90 403 210)">ascendente gruesa</text>
+  <text x="472" y="130" fill="var(--accent3)" font-size="13" text-anchor="middle" font-family="var(--mono)">DCT</text>
+  <text x="530" y="250" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)" transform="rotate(-90 530 250)">colector</text>
+  <text x="55" y="115" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">glomérulo</text>
+  <text x="634" y="415" fill="var(--text-dim)" font-size="10" text-anchor="middle" font-family="var(--mono)">→ pelvis renal / orina</text>
+</svg>
+<div class="diagram-info">Selecciona un segmento de la nefrona para ver qué reabsorbe/secreta y qué fármacos actúan ahí.</div>
+</div>
+<h3>Hiperpotasemia</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t4a-1">
+<caption>Causas de hiperpotasemia</caption>
+<thead><tr><th>Mecanismo</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td>↓ Excreción renal</td><td>ERC/IRA, hipoaldosteronismo, IECA/ARA-II/espironolactona, AINEs, tacrolimus/ciclosporina</td></tr>
+<tr><td>Salida de células (redistribución)</td><td>Acidosis, déficit de insulina, lisis tumoral, rabdomiolisis, hemólisis, β-bloqueantes, digoxina</td></tr>
+<tr><td>Aumento de aporte</td><td>Iatrogenia IV, transfusiones masivas, suplementos orales excesivos</td></tr>
+<tr><td>Pseudohiperpotasemia</td><td>Hemólisis de la muestra, trombocitosis/leucocitosis extremas (frecuente en hemato)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h4>Manejo de la hiperpotasemia (K &gt; 6 o cambios en ECG)</h4>
+<ol>
+<li><strong>ECG siempre primero:</strong> T picudas → QRS ancho → onda sinusoidal → FV/asistolia.</li>
+<li><strong>Estabilizar membrana:</strong> gluconato cálcico 10% IV (no baja el K, protege el miocardio; inicio 1-3 min, dura 30-60 min).</li>
+<li><strong>Meter K a la célula:</strong> insulina rápida IV + glucosa (evitar hipoglucemia), salbutamol nebulizado, bicarbonato si acidosis asociada.</li>
+<li><strong>Eliminar K del cuerpo:</strong> diuréticos de asa (si diuresis conservada), resinas de intercambio (patiromer, ciclosilicato de Na-Zr — más rápidos y mejor tolerados que resinas de calcio clásicas), <strong>hemodiálisis urgente</strong> si K &gt;6.5-7 refractario, IRA oligúrica o inestabilidad.</li>
+<li>Retirar fármacos hiperpotasemiantes y tratar causa de base.</li>
+</ol>
+<h3>Hipopotasemia</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t4a-2">
+<caption>Causas de hipopotasemia</caption>
+<thead><tr><th>Mecanismo</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td>Pérdidas digestivas</td><td>Vómitos, diarrea, laxantes</td></tr>
+<tr><td>Pérdidas renales</td><td>Diuréticos, hiperaldosteronismo, ATR tipo 1/2, Sd. Bartter/Gitelman, anfotericina B</td></tr>
+<tr><td>Redistribución</td><td>Alcalosis, insulina, β2-agonistas, parálisis periódica hipopotasémica</td></tr>
+<tr><td>Aporte insuficiente</td><td>Malnutrición</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p><strong>Manejo:</strong> reposición oral si leve-moderada (&gt;2.5 y asintomática); IV si &lt;2.5, sintomática o arritmia (máx. habitual 10-20 mEq/h en vía central con monitorización). Reponer siempre Mg2+ asociado si está bajo (la hipopotasemia refractaria a reposición de K suele deberse a hipomagnesemia no corregida).</p>
+`;
+
+const T4B = `
+<p class="comment">// hiponatremia</p>
+<h3>Aproximación diagnóstica</h3>
+<ol>
+<li><strong>Confirmar hiponatremia real:</strong> descartar pseudohiponatremia (hiperlipidemia, hiperproteinemia — frecuente en mieloma múltiple por paraproteína) e hiponatremia hiperosmolar (hiperglucemia: corregir Na +1.6 mEq/L por cada 100mg/dL de glucosa &gt;100).</li>
+<li><strong>Osmolaridad plasmática:</strong> si baja → hiponatremia hipotónica verdadera.</li>
+<li><strong>Estado de volemia clínico</strong> (turgencia, PVY, edemas) + <strong>Na urinario</strong> + <strong>osmolaridad urinaria</strong>.</li>
+</ol>
+<div class="table-wrap"><table class="itable" data-table-id="t4b-1">
+<caption>Clasificación de hiponatremia hipotónica</caption>
+<thead><tr><th>Volemia</th><th>Na urinario</th><th>Causas</th></tr></thead>
+<tbody>
+<tr><td>Hipovolémica</td><td>&lt;20: pérdidas extrarrenales (vómitos, diarrea, 3er espacio)</td><td>Diarrea, vómitos, quemados, pancreatitis</td></tr>
+<tr><td>Hipovolémica</td><td>&gt;20: pérdidas renales</td><td>Diuréticos tiazídicos, insuficiencia suprarrenal, nefropatía pierde-sal, sd. pierde-sal cerebral</td></tr>
+<tr><td>Euvolémica</td><td>&gt;20 (habitualmente)</td><td>SIADH, hipotiroidismo, déficit de glucocorticoides, potomanía, "tea and toast"</td></tr>
+<tr><td>Hipervolémica</td><td>&lt;20</td><td>ICC, cirrosis, sd. nefrótico</td></tr>
+<tr><td>Hipervolémica</td><td>&gt;20</td><td>ERC / IRA avanzada</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> SIADH frecuente por: quimioterapia (vincristina, ciclofosfamida, cisplatino), infecciones pulmonares/SNC, dolor, náuseas, y ectópico (raro) por algunos tumores.</div>
+<h3>Tratamiento — regla de oro: CORRECCIÓN LENTA</h3>
+<ul>
+<li><strong>Límite de corrección:</strong> máximo 8 (algunos recomiendan ≤6-8 en pacientes de alto riesgo) mEq/L en 24h y &lt;18 mEq/L en 48h — riesgo de <strong>síndrome de desmielinización osmótica</strong> si se corrige demasiado rápido.</li>
+<li>Hiponatremia aguda sintomática grave (convulsiones, coma): salino hipertónico 3% en bolos de 100-150 mL, repetir según respuesta y clínica, monitorizar Na cada 2-4h.</li>
+<li>Hipovolémica: SSF 0.9%.</li>
+<li>SIADH: restricción hídrica (&lt;800-1000 mL/día), considerar tolvaptán/urea en casos seleccionados (vigilar sobrecorrección — es potente).</li>
+<li>Hipervolémica: restricción de sal y agua, diuréticos, tratar causa de base.</li>
+<li>Si sobrecorrección accidental: revertir con suero glucosado 5% ± desmopresina ("re-lower" o "relowering").</li>
+</ul>
+`;
+
+const T4C = `
+<p class="comment">// magnesio</p>
+<h3>Hipomagnesemia</h3>
+<ul>
+<li><strong>Causas:</strong> alcoholismo, malnutrición, diarrea crónica, IBP prolongados, diuréticos, aminoglucósidos, anfotericina B, cisplatino, inhibidores de calcineurina, síndromes de Gitelman/Bartter.</li>
+<li><strong>Clínica:</strong> temblor, tetania, convulsiones, arritmias (torsade de pointes), y <strong>causa clásica de hipopotasemia e hipocalcemia refractarias</strong> (inhibe la liberación de PTH y produce resistencia tubular a K).</li>
+<li><strong>Tratamiento:</strong> sulfato de magnesio IV si sintomática o &lt;1.0-1.2 mg/dL; oral en casos leves. Vigilar función renal (riesgo de acumulación/toxicidad).</li>
+</ul>
+<h3>Hipermagnesemia</h3>
+<ul>
+<li>Rara; casi siempre en contexto de <strong>ERC/IRA</strong> + aporte exógeno (laxantes/antiácidos con Mg, sulfato de magnesio en preeclampsia).</li>
+<li><strong>Clínica dosis-dependiente:</strong> hiporreflexia → debilidad/parálisis → bradiarritmias, hipotensión → parada respiratoria/cardiaca.</li>
+<li><strong>Tratamiento:</strong> gluconato cálcico IV (antagoniza efectos cardiacos), suspender aporte, diuréticos de asa + SSF si función renal conservada, hemodiálisis si IRA/ERC grave o clínica severa.</li>
+</ul>
+`;
+
+const T4D = `
+<p class="comment">// calcio</p>
+<h3>Regla general</h3>
+<p>Corregir siempre el calcio total por albúmina: <span class="inline-code">Ca corregido = Ca medido + 0.8 x (4 − albúmina g/dL)</span>. Si hay dudas o disproteinemia (mieloma), medir <strong>calcio iónico</strong> directamente.</p>
+<h3>Hipercalcemia</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t4d-1">
+<caption>Causas de hipercalcemia</caption>
+<thead><tr><th>Mecanismo</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td>Aumento de reabsorción ósea</td><td><strong>Mieloma múltiple</strong> (lesiones líticas + RANKL), metástasis óseas, hiperparatiroidismo 1º</td></tr>
+<tr><td>PTHrp (humoral)</td><td>Carcinoma epidermoide, hipernefroma, otros tumores sólidos</td></tr>
+<tr><td>Producción de calcitriol</td><td>Linfomas, sarcoidosis y otras enfermedades granulomatosas</td></tr>
+<tr><td>Otras</td><td>Inmovilización prolongada, intoxicación por vitamina D, tiazidas, hipertiroidismo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h4>Manejo de la hipercalcemia grave (&gt;14 mg/dL o sintomática)</h4>
+<ol>
+<li><strong>Hidratación IV agresiva con SSF</strong> (primera medida siempre, corrige la deshidratación inducida por la propia hipercalcemia).</li>
+<li>Calcitonina SC/IM: acción rápida (horas) pero efecto corto por taquifilaxia — puente hasta que actúen los bifosfonatos.</li>
+<li>Bifosfonatos IV (zoledronato, pamidronato): efecto en 2-4 días, de elección salvo IRA grave (ajustar dosis/evitar si FG muy bajo).</li>
+<li>Denosumab: alternativa si contraindicación a bifosfonatos (p. ej. IRC grave) — muy útil en mieloma.</li>
+<li>Corticoides: útiles si mecanismo mediado por calcitriol (linfoma, granulomatosis, intoxicación vit D).</li>
+<li>Hemodiálisis con baño bajo en calcio si hipercalcemia muy grave, sintomática, refractaria o con IRA/ERC que impide hidratación agresiva.</li>
+</ol>
+<h3>Hipocalcemia</h3>
+<ul>
+<li><strong>Causas:</strong> hipoparatiroidismo (post-quirúrgico), déficit de vitamina D, ERC (↓calcitriol, ↑fósforo), hipomagnesemia, pancreatitis aguda, síndrome de lisis tumoral (por hiperfosfatemia), quelación tras transfusiones masivas (citrato).</li>
+<li><strong>Clínica:</strong> parestesias periorales/acras, Chvostek, Trousseau, tetania, prolongación QT, convulsiones.</li>
+<li><strong>Tratamiento:</strong> gluconato cálcico IV si sintomática/grave; calcio + vitamina D oral en casos leves-crónicos; corregir magnesio siempre.</li>
+</ul>
+`;
+
+const T5 = `
+<p class="comment">// sueroterapia — actualización</p>
+<h3>Fisiología de la regulación del volumen (base de toda decisión de sueroterapia)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t5-0">
+<caption>Los tres sistemas que regulan el volumen circulante</caption>
+<thead><tr><th>Sistema</th><th>Estímulo</th><th>Efecto</th></tr></thead>
+<tbody>
+<tr><td>Eje renina-angiotensina-aldosterona (RAA)</td><td>↓Perfusión renal, ↓Na⁺ distal, ↑tono simpático</td><td>Vasoconstricción (angiotensina II) + retención de Na⁺ y agua (aldosterona) → expande volumen</td></tr>
+<tr><td>ADH (vasopresina)</td><td>↑Osmolaridad plasmática (receptores hipotalámicos, sensibles a cambios &gt;1-2%); también estímulos no osmóticos: hipovolemia, náuseas, dolor, estrés</td><td>Reabsorción de agua libre en el túbulo colector (acuaporinas) → retiene agua, diluye el plasma</td></tr>
+<tr><td>Péptidos natriuréticos (ANP/BNP)</td><td>Distensión de la pared auricular/ventricular por sobrecarga de volumen</td><td>Natriuresis, diuresis y vasodilatación — se oponen al eje RAA</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p>Toda decisión de sueroterapia es, en el fondo, una forma de interferir con estos tres sistemas: reponer volumen frena el eje RAA y la ADH; sobrecargar de volumen activa los péptidos natriuréticos.</p>
+<h3>Cristaloides: ¿balanceados o salino 0.9%?</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t5-1">
+<caption>Comparativa de cristaloides habituales</caption>
+<thead><tr><th>Suero</th><th>Na (mEq/L)</th><th>Cl (mEq/L)</th><th>Otros</th><th>Comentario</th></tr></thead>
+<tbody>
+<tr><td>SSF 0.9%</td><td>154</td><td>154</td><td>-</td><td>No balanceado; grandes volúmenes → acidosis metabólica hiperclorémica</td></tr>
+<tr><td>Ringer Lactato</td><td>130</td><td>109</td><td>Lactato 28, K 4, Ca 3</td><td>Balanceado; evitar/precaución si hiperK grave o insuficiencia hepática severa</td></tr>
+<tr><td>Plasma-Lyte</td><td>140</td><td>98</td><td>Acetato, gluconato, K, Mg</td><td>Balanceado, sin calcio (compatible con hemoderivados)</td></tr>
+<tr><td>Glucosado 5%</td><td>0</td><td>0</td><td>Glucosa 50g/L</td><td>Agua libre; para reponer déficit de agua (p.ej. hipernatremia)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout"><span class="tag">EVIDENCIA</span> Estudios como SMART/BaSICS sugieren que los cristaloides balanceados podrían reducir eventos renales adversos frente a SSF en grandes volúmenes, aunque el beneficio absoluto es modesto y depende del contexto clínico. En hiperK grave, seguir usando SSF (RL tiene algo de K).</div>
+<h3>Conceptos clave</h3>
+<ul>
+<li><strong>Reanimación con volumen guiada por objetivos dinámicos</strong> (variación de presión de pulso, elevación pasiva de piernas) mejor que "a ciegas".</li>
+<li>Evitar sobrecarga de volumen iatrogénica: es un factor de mal pronóstico independiente en IRA/sepsis.</li>
+<li>Coloides (albúmina) reservados a situaciones específicas (cirrosis/PBE, grandes pérdidas); hidroxietilalmidones contraindicados en sepsis/IRA por nefrotoxicidad.</li>
+<li>Sueroterapia de mantenimiento: calcular necesidades basales (regla 4-2-1 mL/kg/h) y ajustar por pérdidas concurrentes, no usar hipotónicos de rutina en pacientes con riesgo de hiponatremia (postoperatorio, SNC).</li>
+</ul>
+`;
+
+const T6 = `
+<p class="comment">// accesos vasculares temporales para TRS</p>
+<h3>Tipos de catéter</h3>
+<ul>
+<li><strong>Catéter venoso central de doble luz no tunelizado</strong> (Shaldon/Mahurkar): uso agudo, &lt;1-3 semanas.</li>
+<li><strong>Catéter tunelizado con manguito (Permcath):</strong> uso más prolongado (semanas-meses), menor riesgo de infección, se usa cuando se prevé necesidad de HD &gt;2-3 semanas sin FAV disponible.</li>
+</ul>
+<h3>Localización de elección</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t6-1">
+<caption>Localizaciones para catéter de diálisis</caption>
+<thead><tr><th>Vena</th><th>Preferencia</th><th>Comentario</th></tr></thead>
+<tbody>
+<tr><td>Yugular interna derecha</td><td>1ª elección</td><td>Trayecto más recto, menor riesgo de estenosis y malposición</td></tr>
+<tr><td>Yugular interna izquierda</td><td>2ª elección</td><td>Trayecto más largo/curvo</td></tr>
+<tr><td>Femoral</td><td>Uso agudo/cama, corta duración</td><td>Mayor riesgo infeccioso, evitar &gt;1 semana si es posible; útil en urgencia sin necesidad de ecografía</td></tr>
+<tr><td>Subclavia</td><td>Evitar</td><td>Alto riesgo de estenosis venosa central → compromete futuros accesos (FAV) del mismo brazo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Técnica</h3>
+<ul>
+<li>Colocación guiada por <strong>ecografía</strong> siempre que sea posible (reduce complicaciones mecánicas).</li>
+<li>Técnica de Seldinger; confirmar posición con radiografía de tórax si acceso yugular/subclavio (punta en aurícula derecha alta / cava superior).</li>
+<li>Sellado de las luces con heparina o citrato al finalizar cada sesión.</li>
+</ul>
+<h3>Complicaciones</h3>
+<ul>
+<li><strong>Mecánicas:</strong> neumotórax/hemotórax (subclavia/yugular), punción arterial, arritmias, malposición.</li>
+<li><strong>Infecciosas:</strong> bacteriemia relacionada con catéter — sospechar si fiebre en HD; hemocultivos periféricos + del catéter; valorar sellado antibiótico vs retirada según gravedad y germen.</li>
+<li><strong>Trombosis / disfunción del catéter:</strong> bajo flujo, recirculación — valorar fibrinolíticos locales (alteplasa) antes de recambio.</li>
+<li><strong>Estenosis venosa central</strong> a largo plazo (más frecuente en subclavia).</li>
+</ul>
+`;
+
+const T7 = `
+<p class="comment">// aféresis terapéutica en enfermedades renales</p>
+<h3>Concepto</h3>
+<p>Técnica de depuración extracorpórea que separa y elimina selectivamente un componente plasmático patógeno (plasmaféresis/recambio plasmático) o, en el caso de la aféresis de células, elementos formes (leucaféresis).</p>
+<h3>Indicaciones nefrológicas principales</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t7-1">
+<caption>Indicaciones de plasmaféresis en patología renal</caption>
+<thead><tr><th>Patología</th><th>Objetivo</th></tr></thead>
+<tbody>
+<tr><td>Enfermedad anti-membrana basal glomerular (Goodpasture)</td><td>Eliminar anticuerpos anti-MBG circulantes</td></tr>
+<tr><td>Vasculitis ANCA con IRA grave / hemorragia alveolar</td><td>Eliminar ANCA e inmunocomplejos, adyuvante a inmunosupresión</td></tr>
+<tr><td>Síndrome hemolítico urémico atípico (SHUa) — uso decreciente desde eculizumab</td><td>Reponer factores del complemento / eliminar autoanticuerpos anti-factor H</td></tr>
+<tr><td>Púrpura trombótica trombocitopénica (PTT)</td><td>Reponer ADAMTS13 y eliminar anticuerpos anti-ADAMTS13 — tratamiento de elección urgente</td></tr>
+<tr><td>Mieloma múltiple con cast nephropathy / hiperviscosidad</td><td>Reducir carga de cadenas ligeras libres circulantes (uso controvertido, ver estudios recientes)</td></tr>
+<tr><td>Rechazo humoral de trasplante renal</td><td>Eliminar anticuerpos donante-específicos (DSA)</td></tr>
+<tr><td>Recidiva de GEFS primaria post-trasplante</td><td>Eliminar factor de permeabilidad circulante</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> En PTT la plasmaféresis es una urgencia vital — no retrasar por pruebas pendientes de ADAMTS13 ante sospecha clínica (anemia hemolítica microangiopática + trombopenia sin otra causa).</div>
+<h3>Aspectos técnicos</h3>
+<ul>
+<li>Requiere acceso vascular de alto flujo (catéter tipo Shaldon habitualmente).</li>
+<li>Reposición con plasma fresco congelado (imprescindible en PTT, aporta ADAMTS13) o albúmina (en la mayoría del resto de indicaciones).</li>
+<li>Complicaciones: hipocalcemia por citrato, reacciones alérgicas al PFC, hipotensión, riesgo infeccioso/hemorrágico por el acceso.</li>
+</ul>
+`;
+
+const T8 = `
+<p class="comment">// indicaciones de hemodiálisis aguda ("AEIOU")</p>
+<div class="table-wrap"><table class="itable" data-table-id="t8-1">
+<caption>Mnemotecnia AEIOU</caption>
+<thead><tr><th>Letra</th><th>Indicación</th><th>Detalle</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>Acidosis</td><td>Metabólica grave (pH &lt;7.1-7.15) refractaria a tratamiento médico</td></tr>
+<tr><td>E</td><td>Electrolitos</td><td>Hiperpotasemia grave o refractaria (&gt;6.5, o con cambios ECG que no responden a medidas médicas)</td></tr>
+<tr><td>I</td><td>Intoxicaciones</td><td>Tóxicos dializables: litio, metanol, etilenglicol, salicilatos, ácido valproico, algunos alcoholes</td></tr>
+<tr><td>O</td><td>Sobrecarga de volumen (Overload)</td><td>Edema agudo de pulmón refractario a diuréticos en IRA/ERC</td></tr>
+<tr><td>U</td><td>Uremia</td><td>Síntomas urémicos: encefalopatía, pericarditis urémica, diátesis hemorrágica urémica</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Complicaciones de la hemodiálisis aguda</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t8-2">
+<caption>Complicaciones intradiálisis</caption>
+<thead><tr><th>Complicación</th><th>Manejo</th></tr></thead>
+<tbody>
+<tr><td>Hipotensión intradiálisis (la más frecuente)</td><td>Trendelenburg, SSF en bolo, reducir tasa de ultrafiltración</td></tr>
+<tr><td>Calambres musculares</td><td>Reducir UF, SSF hipertónico si preciso</td></tr>
+<tr><td>Síndrome de desequilibrio dialítico</td><td>Cefalea, náuseas, confusión, convulsiones por edema cerebral osmótico — prevenir con sesiones iniciales cortas/lentas en IRA/uremia grave</td></tr>
+<tr><td>Arritmias</td><td>Frecuentes por cambios rápidos de K/Ca — monitorización, ajustar baño de diálisis</td></tr>
+<tr><td>Reacciones al dializador (tipo A/B)</td><td>Anafilaxia (tipo A, óxido de etileno) vs dolor torácico/lumbar leve (tipo B) — parar/cambiar dializador según gravedad</td></tr>
+<tr><td>Embolismo aéreo</td><td>Clampar líneas, Trendelenburg en decúbito lateral izquierdo, O2 100%</td></tr>
+<tr><td>Sangrado por heparinización</td><td>Ajustar/anticoagulación regional con citrato si alto riesgo hemorrágico</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+`;
+
+const T9 = `
+<p class="comment">// síndrome de lisis tumoral (SLT) — clave en hematología</p>
+<h3>Fisiopatología</h3>
+<p>Liberación masiva y brusca de contenido intracelular tras lisis rápida de células tumorales (espontánea o, más frecuentemente, tras iniciar quimioterapia) → hiperK, hiperfosfatemia, hiperuricemia e hipocalcemia secundaria (por precipitación de fosfato cálcico) → puede desencadenar <strong>IRA</strong> por depósito de cristales de ácido úrico y fosfato cálcico en túbulos.</p>
+<h3>Factores de riesgo</h3>
+<ul>
+<li>Neoplasias de alta carga tumoral y proliferación rápida: <strong>linfoma de Burkitt, LLA, LMA con leucocitosis alta</strong>, otros linfomas agresivos voluminosos.</li>
+<li>ERC previa, deshidratación, ácido úrico/LDH elevados pre-tratamiento, esplenomegalia, afectación renal previa.</li>
+</ul>
+<h3>Criterios diagnósticos (Cairo-Bishop)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t9-1">
+<caption>SLT de laboratorio (≥2 alteraciones en 24h pre/post tto, ±3 días)</caption>
+<thead><tr><th>Analito</th><th>Criterio</th></tr></thead>
+<tbody>
+<tr><td>Ácido úrico</td><td>≥ 8 mg/dL o aumento ≥25% sobre basal</td></tr>
+<tr><td>Potasio</td><td>≥ 6 mEq/L o aumento ≥25%</td></tr>
+<tr><td>Fósforo</td><td>≥ 4.5 mg/dL (adultos) o aumento ≥25%</td></tr>
+<tr><td>Calcio</td><td>≤ 7 mg/dL o descenso ≥25%</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p><strong>SLT clínico</strong> = SLT de laboratorio + al menos uno de: IRA, arritmia/muerte súbita, convulsiones.</p>
+<h3>Prevención y tratamiento</h3>
+<ol>
+<li><strong>Estratificación de riesgo</strong> antes de iniciar quimioterapia (bajo/intermedio/alto según tipo tumoral, carga y función renal).</li>
+<li><strong>Hidratación IV agresiva</strong> (SSF, sin potasio) iniciada 24-48h antes de la quimioterapia, mantener diuresis alta.</li>
+<li><strong>Hipouricemiantes:</strong>
+  <ul>
+    <li>Alopurinol (riesgo bajo-intermedio): inhibe xantina oxidasa, previene nueva formación de ácido úrico (no reduce el ya formado).</li>
+    <li><strong>Rasburicasa</strong> (riesgo alto): urato-oxidasa recombinante, degrada ácido úrico existente a alantoína — muy eficaz y rápida; <strong>contraindicada en déficit de G6PD</strong> (riesgo de hemólisis grave) — cribar antes si procede.</li>
+  </ul>
+</li>
+<li>Evitar alcalinización urinaria de rutina (riesgo de precipitación de fosfato cálcico, ya no recomendada salvo protocolos específicos).</li>
+<li>Monitorización estrecha de electrolitos (cada 4-6-8h en fase aguda de alto riesgo) y ECG continuo.</li>
+<li><strong>Hemodiálisis</strong> si: hiperK grave refractaria, sobrecarga de volumen, IRA oligoanúrica, hiperfosfatemia sintomática grave, o ácido úrico muy elevado refractario — la HD (más que la diálisis peritoneal) es de elección por su eficacia para aclarar fósforo y ácido úrico.</li>
+</ol>
+`;
+
+const T10Ai = `
+<p class="comment">// hemodiálisis aguda — aspectos técnicos</p>
+<h3>Principios físicos</h3>
+<ul>
+<li><strong>Difusión:</strong> movimiento de solutos a favor de gradiente de concentración a través de la membrana → elimina solutos pequeños (urea, creatinina, K, fosfato).</li>
+<li><strong>Ultrafiltración (convección):</strong> movimiento de agua por gradiente de presión hidrostática → elimina volumen y, en menor medida, solutos de mayor peso molecular.</li>
+</ul>
+<h3>Prescripción típica de HD aguda</h3>
+<ul>
+<li>Sesiones cortas y de baja eficiencia al inicio si uremia grave (riesgo de sd. desequilibrio), aumentando progresivamente duración/eficiencia.</li>
+<li>Anticoagulación: heparina no fraccionada estándar; <strong>citrato regional</strong> si alto riesgo hemorrágico (p. ej. paciente hemato-oncológico con trombopenia/coagulopatía) — requiere monitorización de calcio iónico.</li>
+<li>Ajuste del baño de diálisis (K, Ca, bicarbonato) según electrolitos del paciente.</li>
+</ul>
+<h3>Modalidades continuas (UCI)</h3>
+<p>En pacientes hemodinámicamente inestables se prefieren las <strong>técnicas continuas de reemplazo renal (TCRR/CRRT)</strong>: CVVH, CVVHD, CVVHDF — depuración lenta y continua, mejor tolerancia hemodinámica que la HD intermitente, permiten balance de fluidos más preciso.</p>
+`;
+
+const T10Aii = `
+<p class="comment">// hemodiálisis crónica</p>
+<h3>Accesos vasculares definitivos</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t10aii-1">
+<caption>Comparativa de accesos para HD crónica</caption>
+<thead><tr><th>Acceso</th><th>Maduración</th><th>Ventajas</th><th>Desventajas</th></tr></thead>
+<tbody>
+<tr><td>Fístula arteriovenosa (FAV) autóloga</td><td>6-8 semanas</td><td>Menor infección/trombosis, mejor supervivencia a largo plazo — de elección</td><td>Requiere planificación precoz, puede no madurar</td></tr>
+<tr><td>Injerto arteriovenoso (prótesis, PTFE)</td><td>2-4 semanas</td><td>Utilizable antes que la FAV, útil si vasos malos</td><td>Mayor riesgo de trombosis/infección que FAV</td></tr>
+<tr><td>Catéter tunelizado</td><td>Inmediato</td><td>Uso inmediato</td><td>Mayor riesgo infeccioso, peor supervivencia, evitar como acceso definitivo si es posible</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Complicaciones crónicas de la FAV</h3>
+<ul>
+<li>Trombosis, estenosis (vigilar con exploración física/eco-doppler periódico), aneurismas, síndrome de robo vascular (isquemia distal), infección (menos frecuente que en catéteres/injertos).</li>
+</ul>
+<h3>Pauta habitual y objetivos</h3>
+<ul>
+<li>3 sesiones/semana de 3.5-4h habitualmente, individualizar según función renal residual y peso seco.</li>
+<li>Objetivo Kt/V ≥ 1.2 por sesión (adecuación de diálisis).</li>
+<li>Control de peso seco, TA, anemia, metabolismo óseo-mineral y nutrición de forma periódica.</li>
+</ul>
+`;
+
+const T10B = `
+<p class="comment">// diálisis peritoneal continua ambulatoria (CAPD/DP)</p>
+<h3>Fundamento</h3>
+<p>Utiliza el peritoneo del propio paciente como membrana semipermeable. El líquido de diálisis (con glucosa u otros agentes osmóticos como icodextrina) se infunde en la cavidad peritoneal a través de un catéter permanente (Tenckhoff), permanece un tiempo de permanencia y se drena, repitiendo el ciclo (manual en CAPD o automatizado por máquina cicladora nocturna en DPA).</p>
+<h3>Ventajas frente a HD</h3>
+<ul>
+<li>Mayor autonomía del paciente (domiciliaria), preserva mejor la función renal residual, no requiere acceso vascular ni anticoagulación, mejor tolerancia hemodinámica (técnica continua/lenta) — preferible en cardiópatas frágiles.</li>
+<li>Suele preferirse como primera opción en pacientes jóvenes, con buena capacidad de autocuidado, o como "puente" antes de trasplante.</li>
+</ul>
+<h3>Contraindicaciones</h3>
+<ul>
+<li>Absolutas: pérdida de la función/superficie peritoneal (adherencias extensas), enfermedad inflamatoria intestinal activa, hernias no reparadas no corregibles, incapacidad del paciente/cuidador para la técnica sin soporte social.</li>
+<li>Relativas: cirugía abdominal reciente, obesidad mórbida, colostomías/ostomías.</li>
+</ul>
+<h3>Complicación principal: peritonitis</h3>
+<ul>
+<li>Clínica: dolor abdominal, líquido turbio, fiebre. Diagnóstico: &gt;100 leucocitos/µL en líquido peritoneal con &gt;50% PMN.</li>
+<li>Tratamiento empírico intraperitoneal cubriendo Gram+ y Gram- (p. ej. vancomicina/cefazolina + ceftazidima o aminoglucósido) hasta cultivo.</li>
+<li>Retirar catéter si peritonitis fúngica, refractaria (&gt;5 días sin mejoría) o recurrente/recidivante.</li>
+</ul>
+`;
+
+const T11 = `
+<p class="comment">// fármacos en insuficiencia renal</p>
+<h3>Principios generales de ajuste de dosis</h3>
+<ul>
+<li>Estimar el FG (CKD-EPI o Cockcroft-Gault según el fármaco/ficha técnica) antes de prescribir.</li>
+<li>Fármacos de eliminación renal predominante requieren ajuste de dosis o intervalo; los de eliminación hepática habitualmente no (salvo metabolitos activos renales).</li>
+<li>En diálisis: considerar si el fármaco es dializable (bajo peso molecular, baja unión a proteínas, bajo volumen de distribución) → puede requerir dosis suplementaria post-HD.</li>
+<li>Usar siempre dosis de carga estándar (no reducir la primera dosis) y ajustar las de mantenimiento.</li>
+</ul>
+<h3>Patrones de nefrotoxicidad farmacológica (por mecanismo)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t11-0">
+<caption>Clasificación mecanística de la nefrotoxicidad</caption>
+<thead><tr><th>Patrón</th><th>Mecanismo</th><th>Ejemplos típicos</th></tr></thead>
+<tbody>
+<tr><td>Funcional / hemodinámico</td><td>Altera la autorregulación del FG sin lesión estructural inicial</td><td>AINEs (vasoconstricción aferente), IECA/ARA-II (vasodilatación eferente), inhibidores de calcineurina</td></tr>
+<tr><td>Tóxico tubular directo (NTA)</td><td>Daño directo a las células del túbulo proximal</td><td>Aminoglucósidos, cisplatino, contraste yodado, anfotericina B, tenofovir</td></tr>
+<tr><td>Nefritis intersticial inmunoalérgica</td><td>Reacción de hipersensibilidad en el intersticio</td><td>Betalactámicos, AINEs, IBP, alopurinol, quinolonas</td></tr>
+<tr><td>Obstrucción intratubular por cristales</td><td>Precipitación de cristales/fármaco dentro del túbulo</td><td>Aciclovir IV rápido, metotrexato a altas dosis, sulfamidas, ácido úrico (lisis tumoral)</td></tr>
+<tr><td>Microangiopatía trombótica</td><td>Daño endotelial con formación de microtrombos</td><td>Gemcitabina, inhibidores de VEGF, inhibidores de calcineurina</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Fármacos nefrotóxicos a vigilar especialmente</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t11-1">
+<caption>Nefrotoxicidad por grupo farmacológico</caption>
+<thead><tr><th>Fármaco</th><th>Mecanismo</th><th>Comentario</th></tr></thead>
+<tbody>
+<tr><td>AINEs</td><td>Vasoconstricción arteriola aferente</td><td>Evitar en ERC, IRA, deshidratación</td></tr>
+<tr><td>IECA / ARA-II</td><td>Vasodilatación arteriola eferente</td><td>Elevación de creatinina &lt;30% esperable/aceptable al iniciar; suspender si mayor</td></tr>
+<tr><td>Aminoglucósidos</td><td>Toxicidad tubular directa</td><td>Monitorizar niveles, dosis única diaria si posible</td></tr>
+<tr><td>Contraste yodado</td><td>Vasoconstricción + toxicidad tubular directa</td><td>Hidratación periprocedimiento, minimizar volumen de contraste en riesgo</td></tr>
+<tr><td>Cisplatino</td><td>Toxicidad tubular proximal directa</td><td>Hidratación agresiva pre/post, magnesio frecuentemente bajo</td></tr>
+<tr><td>Inhibidores de calcineurina (tacrolimus/ciclosporina)</td><td>Vasoconstricción, toxicidad crónica</td><td>Monitorizar niveles</td></tr>
+<tr><td>Vancomicina</td><td>Toxicidad tubular, sinergia con otros nefrotóxicos</td><td>Monitorizar niveles/AUC</td></tr>
+<tr><td>Metotrexato altas dosis</td><td>Precipitación tubular en orina ácida</td><td>Hidratación + alcalinización urinaria + rescate con folínico, niveles seriados</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Ejemplos de ajuste (orientativo — comprobar siempre ficha técnica)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t11-2">
+<caption>Ajuste orientativo por FGe (mL/min)</caption>
+<thead><tr><th>Fármaco</th><th>FGe 30-60</th><th>FGe &lt;30</th><th>HD</th></tr></thead>
+<tbody>
+<tr><td>Enoxaparina</td><td>Sin ajuste habitual</td><td>Reducir dosis / preferir HNF</td><td>Evitar, usar HNF</td></tr>
+<tr><td>Aciclovir</td><td>Ajustar intervalo</td><td>Ajustar dosis e intervalo</td><td>Dosis post-HD</td></tr>
+<tr><td>Piperacilina-tazobactam</td><td>Ajustar dosis</td><td>Ajustar dosis</td><td>Dosis post-HD</td></tr>
+<tr><td>Metformina</td><td>Precaución / reducir</td><td>Contraindicada</td><td>Contraindicada</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+`;
+
+const T12 = `
+<p class="comment">// trasplante renal</p>
+<h3>Trasplante reciente (primeras semanas)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t12-1">
+<caption>Complicaciones precoces post-trasplante</caption>
+<thead><tr><th>Complicación</th><th>Claves</th></tr></thead>
+<tbody>
+<tr><td>Necrosis tubular aguda del injerto</td><td>Causa más frecuente de función retardada del injerto (DGF), sobre todo en donante en asistolia/criterios expandidos</td></tr>
+<tr><td>Rechazo hiperagudo</td><td>Minutos-horas, mediado por anticuerpos preformados — hoy raro por cross-match previo</td></tr>
+<tr><td>Rechazo agudo celular</td><td>Días-semanas, infiltrado linfocitario en biopsia — tratamiento con corticoides a altas dosis ± timoglobulina</td></tr>
+<tr><td>Rechazo agudo humoral (mediado por Ac)</td><td>DSA positivos, C4d+ en biopsia — plasmaféresis + IGIV ± rituximab</td></tr>
+<tr><td>Complicaciones quirúrgicas</td><td>Trombosis arterial/venosa del injerto, fuga o estenosis ureteral, linfocele, hematoma</td></tr>
+<tr><td>Toxicidad por inhibidores de calcineurina</td><td>Vasoconstricción de arteriola aferente, puede simular rechazo — niveles y biopsia si duda</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Inmunosupresión de mantenimiento (esquema habitual)</h3>
+<ul>
+<li><strong>Inducción:</strong> basiliximab (bajo riesgo inmunológico) o timoglobulina (alto riesgo).</li>
+<li><strong>Mantenimiento típico:</strong> inhibidor de calcineurina (tacrolimus) + antimetabolito (micofenolato) + corticoides, con reducción progresiva de estos últimos.</li>
+</ul>
+<h3>Trasplante de larga evolución — complicaciones frecuentes</h3>
+<ul>
+<li><strong>Nefropatía crónica del injerto:</strong> combinación de rechazo crónico, toxicidad crónica por ICN, y factores no inmunológicos (HTA, recurrencia de enfermedad de base).</li>
+<li><strong>Infecciones oportunistas:</strong> CMV (profilaxis con valganciclovir en donante+/receptor-), poliomavirus BK (nefropatía por virus BK — reducir inmunosupresión si viremia alta), Pneumocystis jirovecii (profilaxis con cotrimoxazol).</li>
+<li><strong>Neoplasias:</strong> mayor incidencia de tumores cutáneos, enfermedad linfoproliferativa post-trasplante (PTLD, asociada a VEB) — cribado activo.</li>
+<li><strong>Riesgo cardiovascular aumentado</strong> (primera causa de muerte con injerto funcionante): HTA, dislipemia, diabetes post-trasplante (por corticoides/tacrolimus).</li>
+<li><strong>Recurrencia de la enfermedad renal primaria</strong> (GEFS, nefropatía IgA, SHUa) en el injerto.</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> Pacientes con trasplante renal previo que desarrollan neoplasia hematológica (o viceversa, candidatos a TPH con injerto renal) requieren manejo multidisciplinar estrecho por interacción fármacos-inmunosupresión y ajuste renal de quimioterapia.</div>
+`;
+
+const T13 = `
+<p class="comment">// radiología intervencionista en nefrología — biopsia renal percutánea</p>
+<h3>Indicaciones</h3>
+<ul>
+<li>IRA de causa no aclarada (tras descartar pre-renal y post-renal) con sospecha de causa intrínseca que cambiaría el manejo.</li>
+<li>Síndrome nefrótico del adulto (salvo diabetes de larga evolución con retinopatía concordante, donde puede evitarse).</li>
+<li>Proteinuria/hematuria glomerular persistente de causa no filiada.</li>
+<li>Deterioro inexplicado de función en trasplante renal (protocolo o indicación clínica), sospecha de rechazo.</li>
+<li>Sospecha de glomerulonefritis rápidamente progresiva / vasculitis (urgente, condiciona tratamiento inmunosupresor intensivo).</li>
+</ul>
+<h3>Contraindicaciones</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t13-1">
+<caption>Contraindicaciones de biopsia renal</caption>
+<thead><tr><th>Absolutas</th><th>Relativas</th></tr></thead>
+<tbody>
+<tr><td>Diátesis hemorrágica no corregida</td><td>HTA mal controlada</td></tr>
+<tr><td>Riñón único (salvo trasplante — es la norma)</td><td>ERC avanzada / riñones pequeños atróficos</td></tr>
+<tr><td>Infección renal o perirrenal activa</td><td>Obesidad mórbida</td></tr>
+<tr><td>Paciente no colaborador/inestable</td><td>Quiste renal grande en trayecto, malformaciones vasculares</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Preparación</h3>
+<ul>
+<li>Coagulación normal (o corregida): plaquetas &gt;100.000, INR/TTPA normales; suspender antiagregantes/anticoagulantes según protocolo (p.ej. clopidogrel 5-7 días, AAS habitualmente se puede mantener).</li>
+<li>Control de TA (&lt;140/90 mmHg idealmente antes del procedimiento).</li>
+<li>Ecografía previa para valorar anatomía y descartar contraindicaciones.</li>
+</ul>
+<h3>Técnica</h3>
+<p>Guiada por ecografía (de elección) en tiempo real, aguja de biopsia automática (tipo "true-cut"), habitualmente polo inferior del riñón izquierdo o derecho, decúbito prono (o lateral en trasplante, abordaje anterior). Se obtienen 2-3 cilindros para microscopía óptica, inmunofluorescencia y microscopía electrónica.</p>
+<h3>Complicaciones</h3>
+<ul>
+<li><strong>Hematoma perirrenal</strong> (la más frecuente, mayoría asintomáticos, autolimitados).</li>
+<li>Hematuria macroscópica transitoria.</li>
+<li>Fístula arteriovenosa intrarrenal (habitualmente asintomática, cierre espontáneo).</li>
+<li>Sangrado significativo con necesidad de transfusión o embolización angiográfica (poco frecuente, &lt;1-2%).</li>
+<li>Nefrectomía por sangrado incontrolable (excepcional).</li>
+</ul>
+<h3>Cuidados post-biopsia</h3>
+<ul>
+<li>Reposo en cama y monitorización de TA/diuresis/hematuria durante 6-24h según protocolo del centro.</li>
+<li>Control de hemoglobina a las horas del procedimiento si hay sospecha de sangrado.</li>
+</ul>
+`;
+
+/* =========================================================
+   CONTENIDO — NEFROLOGÍA (objetivos añadidos, marcados HEM)
+   ========================================================= */
+
+const T14 = `
+<p class="comment">// regulación del metabolismo mineral</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación de Hematología — complementa la ERC-MBD (apartado 2) y los trastornos del calcio (apartado 4d).</div>
+<h3>Los tres reguladores clave</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t14-1">
+<caption>Eje PTH — Calcitriol — FGF23</caption>
+<thead><tr><th>Hormona</th><th>Estímulo principal</th><th>Efectos</th></tr></thead>
+<tbody>
+<tr><td>PTH (paratiroides)</td><td>↓Ca²⁺, ↑P, ↓calcitriol</td><td>↑Resorción ósea, ↑reabsorción renal de Ca²⁺, ↓reabsorción renal de P (fosfaturia), ↑síntesis de calcitriol (activa la 1α-hidroxilasa renal)</td></tr>
+<tr><td>Calcitriol (vitamina D activa)</td><td>↑PTH, ↓P, ↓Ca²⁺</td><td>↑Absorción intestinal de Ca²⁺ y P, ↑resorción ósea, retroalimentación negativa sobre la PTH</td></tr>
+<tr><td>FGF23 (hueso — osteocitos)</td><td>↑P, ↑calcitriol</td><td>↓Reabsorción renal de P (fosfaturia potente), ↓síntesis de calcitriol (inhibe la 1α-hidroxilasa) — necesita klotho como correceptor renal</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Correlación clínica</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t14-2">
+<caption>Hiperparatiroidismo: 1º vs 2º vs 3º</caption>
+<thead><tr><th>Tipo</th><th>PTH</th><th>Ca²⁺</th><th>Contexto</th></tr></thead>
+<tbody>
+<tr><td>1º (adenoma/hiperplasia paratiroidea)</td><td>↑↑</td><td>↑</td><td>Autónomo, sin estímulo fisiológico previo</td></tr>
+<tr><td>2º</td><td>↑↑</td><td>↓/normal</td><td>Compensador — típico de ERC (↓calcitriol, ↑P retenido) o déficit de vitamina D</td></tr>
+<tr><td>3º</td><td>↑↑↑</td><td>↑</td><td>Autonomización de unas paratiroides hiperestimuladas de forma crónica (ERC avanzada de larga evolución)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p>Para la traducción clínica de estos ejes en la ERC (déficit de calcitriol, hiperfosfatemia, HPT2º, tratamiento con quelantes/calcimiméticos), repasa <span class="inline-code">Nefrología → 2. Enfermedad Renal Crónica</span>. Para hipercalcemia por PTHrp o calcitriol ectópico en el paciente oncohematológico, repasa <span class="inline-code">Nefrología → 4d</span>.</p>
+`;
+
+const T15 = `
+<p class="comment">// hipertensión arterial — enfoque nefrológico</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación. Para clasificación general, urgencia/emergencia hipertensiva y manejo agudo, ver <span class="inline-code">Cardiología → 10. Hipertensión arterial</span> — aquí nos centramos en el ángulo específicamente renal.</div>
+<h3>HTA como causa y como consecuencia de enfermedad renal</h3>
+<ul>
+<li><strong>HTA que daña el riñón:</strong> nefroangiosclerosis — arterioloesclerosis hialina de las arteriolas renales por HTA crónica mal controlada, causa frecuente de ERC, especialmente en combinación con diabetes.</li>
+<li><strong>Enfermedad renal que causa HTA:</strong> prácticamente toda nefropatía parenquimatosa (glomerulopatías, ERC de cualquier causa) cursa con HTA secundaria por retención de sodio/agua y activación del eje renina-angiotensina-aldosterona.</li>
+</ul>
+<h3>HTA renovascular (estenosis de arteria renal)</h3>
+<ul>
+<li><strong>Causas:</strong> aterosclerótica (más frecuente, varones mayores con factores de riesgo CV, afecta ostium/tercio proximal) vs displasia fibromuscular (mujeres jóvenes, típicamente en dos tercios distales, patrón "en collar de cuentas").</li>
+<li><strong>Sospecha clínica:</strong> HTA de inicio antes de los 30 o después de los 55 años, HTA resistente, soplo abdominal, deterioro agudo de función renal tras iniciar IECA/ARA-II (sugiere estenosis bilateral o sobre riñón único), episodios recurrentes de edema agudo de pulmón "flash" sin causa cardiaca clara, asimetría renal en pruebas de imagen.</li>
+<li><strong>Diagnóstico:</strong> eco-doppler renal (cribado), angio-TC o angio-RM, arteriografía si se plantea intervención.</li>
+<li><strong>Tratamiento:</strong> médico (IECA/ARA-II con vigilancia estrecha de función renal si unilateral, evitar si bilateral/riñón único) — revascularización (angioplastia ± stent) reservada a casos seleccionados (fracaso del tratamiento médico, deterioro progresivo de función renal, edema agudo de pulmón recurrente).</li>
+</ul>
+<h3>HTA resistente</h3>
+<p>TA no controlada pese a 3 fármacos a dosis plenas de clases distintas, incluyendo un diurético apropiado para la función renal del paciente (o control solo con ≥4 fármacos).</p>
+<div class="table-wrap"><table class="itable" data-table-id="t15-1">
+<caption>Causas a descartar en HTA resistente</caption>
+<thead><tr><th>Categoría</th><th>Ejemplos</th></tr></thead>
+<tbody>
+<tr><td>Pseudorresistencia</td><td>Mal cumplimiento terapéutico, HTA de bata blanca, técnica de medida incorrecta</td></tr>
+<tr><td>Causas secundarias</td><td>Estenosis de arteria renal, hiperaldosteronismo primario, apnea obstructiva del sueño, enfermedad renal parenquimatosa, feocromocitoma</td></tr>
+<tr><td>Fármacos/tóxicos</td><td>AINEs, corticoides, anticonceptivos orales, regaliz, cocaína/simpaticomiméticos</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Nefroprotección</h3>
+<p>Objetivo de TA individualizado (~120-130/80 mmHg según KDIGO 2021) — IECA/ARA-II como primera línea si hay albuminuria (efecto nefroprotector más allá del control tensional, por reducción de la presión intraglomerular). No combinar IECA + ARA-II (mayor riesgo de hiperK e IRA sin beneficio adicional demostrado).</p>
+`;
+
+const T16 = `
+<p class="comment">// infecciones del tracto urinario (ITU)</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación.</div>
+<h3>Clasificación</h3>
+<ul>
+<li><strong>Por localización:</strong> ITU baja (cistitis, uretritis) vs ITU alta (pielonefritis aguda).</li>
+<li><strong>No complicada:</strong> mujer sana, no gestante, tracto urinario estructural y funcionalmente normal.</li>
+<li><strong>Complicada:</strong> varón, embarazo, anomalías estructurales/funcionales del tracto urinario, sondaje vesical, litiasis, <strong>inmunosupresión o neutropenia</strong>, ERC — prácticamente todo paciente hemato-oncológico con ITU se considera complicada por definición.</li>
+</ul>
+<h3>Diagnóstico</h3>
+<ul>
+<li>Clínica: disuria, polaquiuria, urgencia (cistitis); fiebre, dolor en fosa renal, puñopercusión positiva, náuseas (pielonefritis).</li>
+<li>Sedimento urinario: leucocituria, nitritos positivos (orienta a enterobacterias), hematuria ocasional.</li>
+<li><strong>Urocultivo: obligatorio en toda ITU complicada</strong> (y por tanto, prácticamente siempre en el paciente hemato-oncológico) antes de iniciar antibioterapia empírica.</li>
+</ul>
+<h3>Tratamiento empírico orientativo</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t16-1">
+<caption>Orientación empírica (ajustar siempre a antibiograma y protocolo local)</caption>
+<thead><tr><th>Cuadro</th><th>Opciones habituales</th></tr></thead>
+<tbody>
+<tr><td>Cistitis no complicada</td><td>Fosfomicina trometamol dosis única, nitrofurantoína 5 días</td></tr>
+<tr><td>Pielonefritis no complicada</td><td>Ciprofloxacino o cefalosporina de 3ª generación, 7-10 días</td></tr>
+<tr><td>ITU complicada / paciente neutropénico</td><td>Cobertura empírica de amplio espectro con actividad antipseudomónica (p. ej. piperacilina-tazobactam o cefepime) hasta resultado de urocultivo, según protocolo de neutropenia febril del centro</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Bacteriuria asintomática</h3>
+<p>Urocultivo positivo sin síntomas — <strong>no tratar</strong> en la mayoría de pacientes (incluida la mayoría de inmunosuprimidos y sondados crónicos). Excepciones que sí requieren tratamiento: gestación y antes de un procedimiento urológico invasivo con riesgo de sangrado de mucosa.</p>
+<h3>Candiduria</h3>
+<p>Casi siempre representa colonización, no infección. Manejo: retirar o cambiar la sonda vesical si la hay; tratar solo si sintomática, en neutropenia, en el paciente que va a someterse a manipulación urológica, o en el recién nacido de bajo peso.</p>
+<div class="callout warn"><span class="tag">HEMATO</span> En neutropenia febril con sospecha de foco urinario: urocultivo (y hemocultivos) siempre antes de la primera dosis de antibiótico si es posible sin retrasar el tratamiento, y cobertura empírica de amplio espectro según protocolo de neutropenia febril del centro, no según las guías estándar de ITU comunitaria.</div>
+`;
+
+const T17 = `
+<p class="comment">// farmacología de diuréticos y antihipertensivos</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación. El sitio de acción de cada diurético se corresponde con el diagrama interactivo de la nefrona del apartado 4a.</div>
+<h3>Diuréticos por sitio de acción</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t17-1">
+<caption>Clases de diuréticos</caption>
+<thead><tr><th>Clase</th><th>Sitio / mecanismo</th><th>Ejemplos</th><th>Efectos adversos principales</th></tr></thead>
+<tbody>
+<tr><td>De asa</td><td>Rama ascendente gruesa — inhiben NKCC2</td><td>Furosemida, torasemida, bumetanida</td><td>Hipopotasemia, hipomagnesemia, <strong>hipocalcemia</strong> (a diferencia de las tiazidas), ototoxicidad a dosis altas/IV rápida, alcalosis metabólica</td></tr>
+<tr><td>Tiazidas / tipo tiazida</td><td>Túbulo contorneado distal — inhiben NCC</td><td>Hidroclorotiazida, clortalidona, indapamida</td><td>Hipopotasemia, hiponatremia, <strong>hipercalcemia</strong> leve, hiperglucemia, hiperuricemia, dislipemia</td></tr>
+<tr><td>Ahorradores de K — antagonistas de aldosterona</td><td>Túbulo/conducto colector — bloquean el receptor mineralocorticoide</td><td>Espironolactona, eplerenona</td><td>Hiperpotasemia, ginecomastia/mastodinia (espironolactona, menos con eplerenona)</td></tr>
+<tr><td>Ahorradores de K — bloqueantes de ENaC</td><td>Túbulo/conducto colector — bloquean el canal ENaC</td><td>Amilorida, triamtereno</td><td>Hiperpotasemia</td></tr>
+<tr><td>Inhibidores de la anhidrasa carbónica</td><td>Túbulo contorneado proximal</td><td>Acetazolamida</td><td>Acidosis metabólica hiperclorémica, orina alcalina (litiasis de fosfato cálcico)</td></tr>
+<tr><td>Osmóticos</td><td>Actúan en todo el túbulo por gradiente osmótico</td><td>Manitol</td><td>Riesgo de IRA por NTA osmótica, expansión de volumen inicial (precaución en IC)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Antihipertensivos por clase</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t17-2">
+<caption>Clases de antihipertensivos</caption>
+<thead><tr><th>Clase</th><th>Ejemplos</th><th>Puntos clave</th></tr></thead>
+<tbody>
+<tr><td>IECA</td><td>Enalapril, ramipril, lisinopril</td><td>Nefroprotección si albuminuria, tos seca (bradicinina), angioedema, hiperK, contraindicado en embarazo y estenosis bilateral de arteria renal</td></tr>
+<tr><td>ARA-II</td><td>Losartán, valsartán, irbesartán</td><td>Mismo perfil que IECA sin tos (no aumentan bradicinina); no combinar con IECA</td></tr>
+<tr><td>Calcioantagonistas dihidropiridínicos</td><td>Amlodipino, nifedipino</td><td>Vasodilatación arterial, edemas maleolares, cefalea, sin efecto relevante en la conducción cardiaca</td></tr>
+<tr><td>Calcioantagonistas no dihidropiridínicos</td><td>Verapamilo, diltiazem</td><td>Bradicardizantes, evitar combinar con betabloqueantes; útiles también en control de frecuencia en FA</td></tr>
+<tr><td>Betabloqueantes</td><td>Bisoprolol, carvedilol, atenolol</td><td>Especialmente indicados si cardiopatía isquémica o insuficiencia cardiaca asociada; broncoespasmo, bradicardia, enmascaran hipoglucemia</td></tr>
+<tr><td>Antagonistas de aldosterona</td><td>Espironolactona, eplerenona</td><td>Útiles en HTA resistente (sobre todo si hiperaldosteronismo); hiperK</td></tr>
+<tr><td>Alfabloqueantes</td><td>Doxazosina</td><td>Hipotensión ortostática, útil si hiperplasia prostática benigna asociada</td></tr>
+<tr><td>Vasodilatadores directos</td><td>Hidralazina</td><td>Taquicardia refleja, retención de líquidos, síndrome lupus-like con uso prolongado</td></tr>
+<tr><td>Agentes de acción central</td><td>Alfametildopa, clonidina</td><td>Alfametildopa es de elección en HTA gestacional; clonidina con riesgo de HTA de rebote al retirarla bruscamente</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+`;
+
+const T18A = `
+<p class="comment">// manejo de drogas inmunosupresoras</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación. Complementa el manejo del trasplante renal (apartado 12).</div>
+<div class="table-wrap"><table class="itable" data-table-id="t18a-1">
+<caption>Principales familias de inmunosupresores</caption>
+<thead><tr><th>Clase</th><th>Ejemplos</th><th>Mecanismo</th><th>Toxicidad principal</th></tr></thead>
+<tbody>
+<tr><td>Inhibidores de calcineurina</td><td>Tacrolimus, ciclosporina</td><td>Inhiben la calcineurina → ↓producción de IL-2 → ↓activación de linfocitos T</td><td>Nefrotoxicidad (vasoconstricción de la arteriola aferente), neurotoxicidad (temblor, cefalea, PRES), HTA, diabetes post-trasplante, hiperpotasemia, hipomagnesemia — requieren monitorización de niveles valle</td></tr>
+<tr><td>Antimetabolitos</td><td>Micofenolato mofetilo/ácido micofenólico, azatioprina</td><td>Inhiben la proliferación de linfocitos (síntesis de purinas)</td><td><strong>Mielotoxicidad</strong> (relevancia directa en hematología), toxicidad gastrointestinal (micofenolato), teratogenicidad</td></tr>
+<tr><td>Inhibidores de mTOR</td><td>Sirolimus, everolimus</td><td>Bloquean la vía mTOR → ↓proliferación celular</td><td>Proteinuria, retraso de la cicatrización de heridas, hiperlipidemia, neumonitis</td></tr>
+<tr><td>Corticoides</td><td>Prednisona, metilprednisolona</td><td>Inmunosupresión amplia, antiinflamatorio</td><td>Diabetes, osteoporosis, HTA, infecciones, miopatía, cataratas</td></tr>
+<tr><td>Terapias biológicas de inducción/rechazo</td><td>Basiliximab (anti-CD25), timoglobulina (anti-timocito), rituximab (anti-CD20)</td><td>Depleción o bloqueo selectivo de subpoblaciones linfocitarias</td><td>Reacciones infusionales, mayor riesgo infeccioso, citopenias (timoglobulina)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> Azatioprina, micofenolato, corticoides y rituximab son fármacos compartidos entre trasplante renal y práctica hematológica (autoinmunidad, LES, PTI, GN por depósito de complejos, etc.) — vigilar mielosupresión aditiva cuando coinciden con quimioterapia o con enfermedad hematológica de base.</div>
+`;
+
+const T18B = `
+<p class="comment">// interacciones farmacológicas con inmunosupresores</p>
+<div class="callout"><span class="hem-badge">HEM</span> Objetivo añadido desde el listado propio de la rotación.</div>
+<h3>Inhibidores de calcineurina — sustratos de CYP3A4 y glicoproteína P</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t18b-1">
+<caption>Interacciones con tacrolimus / ciclosporina</caption>
+<thead><tr><th>Efecto</th><th>Fármacos implicados</th></tr></thead>
+<tbody>
+<tr><td>↑ Niveles (riesgo de toxicidad)</td><td>Azoles antifúngicos (fluconazol, voriconazol, posaconazol — <strong>muy frecuente en profilaxis antifúngica hemato-oncológica</strong>), macrólidos (claritromicina, eritromicina — no azitromicina), diltiazem/verapamilo, zumo de pomelo</td></tr>
+<tr><td>↓ Niveles (riesgo de rechazo)</td><td>Rifampicina, fenitoína, carbamazepina, hierba de San Juan</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Otras interacciones relevantes</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t18b-2">
+<caption>Combinaciones a vigilar</caption>
+<thead><tr><th>Combinación</th><th>Riesgo</th></tr></thead>
+<tbody>
+<tr><td>Alopurinol + azatioprina</td><td>El alopurinol inhibe la xantina oxidasa → acumulación de metabolitos activos de azatioprina → <strong>mielosupresión grave</strong>. Si es imprescindible combinarlos, reducir la dosis de azatioprina ~75% y vigilar hemograma estrechamente; mejor evitar la combinación si hay alternativa</td></tr>
+<tr><td>AINEs + inhibidores de calcineurina</td><td>Nefrotoxicidad aditiva</td></tr>
+<tr><td>IECA/ARA-II + inhibidores de calcineurina o trimetoprim</td><td>Riesgo de hiperpotasemia aditiva</td></tr>
+<tr><td>Trimetoprim-sulfametoxazol (profilaxis de Pneumocystis) + micofenolato/metotrexato</td><td>Mielotoxicidad aditiva</td></tr>
+<tr><td>Trimetoprim-sulfametoxazol + inhibidores de calcineurina</td><td>El trimetoprim inhibe la secreción tubular de creatinina (elevación "pseudo" de creatinina, no siempre daño renal real) y puede aumentar el K⁺</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> Presta especial atención cuando un paciente recibe quimioterapia e inmunosupresores a la vez (p. ej. trasplante renal previo con neoplasia hematológica posterior) — revisa siempre la interacción con azoles antifúngicos, una de las combinaciones más frecuentes y peligrosas en la práctica real de planta.</div>
+`;
+
+/* =========================================================
+   CONTENIDO — CARDIOLOGÍA
+   ========================================================= */
+
+const C_OBJ = `
+<p class="comment">// por qué le importa la cardiología a un residente de hematología</p>
+<div class="callout"><span class="tag">OBJETIVO</span> Reconocer y manejar de forma inicial los problemas cardiológicos más frecuentes en el paciente onco-hematológico: cardiotoxicidad por quimioterapia, arritmias en el contexto de anemia/trombopenia/anticoagulación, derrames pericárdicos malignos, amiloidosis cardiaca por cadenas ligeras, y saber leer un ECG de forma sistemática en cualquier guardia.</p>
+<h3>Índice de contenidos</h3>
+<ol>
+<li>Lectura sistemática del ECG (ritmo, eje, intervalos, ondas, patrones)</li>
+<li>Arritmias frecuentes: FA, TSV, bradiarritmias, arritmias ventriculares</li>
+<li>Síndrome coronario agudo: reconocimiento y manejo inicial</li>
+<li>Insuficiencia cardiaca: conceptos básicos</li>
+<li>Cardiotoxicidad por quimioterapia y radioterapia</li>
+<li>Amiloidosis cardiaca (relevancia directa en gammapatías/mieloma)</li>
+<li>Derrame pericárdico y taponamiento cardiaco</li>
+<li>Anticoagulación/antiagregación en el paciente onco-hematológico</li>
+<li>Biomarcadores cardiacos: troponina y NT-proBNP</li>
+<li>Hipertensión arterial: manejo básico</li>
+<li>Soplos, valvulopatías y endocarditis</li>
+</ol>
+<p>Activa <span class="inline-code">✎ editar</span> arriba a la derecha para añadir tus propios apuntes o casos vistos en planta/guardia — se guarda automáticamente igual que en la sección de Nefrología.</p>
+`;
+
+const C1A = `
+<p class="comment">// paso 1 de la lectura sistemática — ritmo y frecuencia</p>
+<h3>Frecuencia cardiaca</h3>
+<ul>
+<li><strong>Regla de los 300:</strong> 300 / (nº de cuadros grandes entre dos R consecutivas).</li>
+<li><strong>Regla de los 1500:</strong> 1500 / (nº de cuadros pequeños entre dos R).</li>
+<li>Ritmo irregular: contar QRS en tira de ritmo de 6 segundos x10.</li>
+</ul>
+<h3>¿Es ritmo sinusal?</h3>
+<p>Requiere los 4 criterios:</p>
+<ol>
+<li>Onda P presente antes de cada QRS.</li>
+<li>Onda P positiva en II, III, aVF y negativa en aVR.</li>
+<li>Cada P seguida de un QRS (conducción 1:1).</li>
+<li>Intervalo PR constante (120-200 ms) y morfología de P constante.</li>
+</ol>
+<div class="table-wrap"><table class="itable" data-table-id="c1a-1">
+<caption>Ritmo regular vs irregular: primeras pistas</caption>
+<thead><tr><th>Patrón</th><th>Pensar en...</th></tr></thead>
+<tbody>
+<tr><td>Regular, P normal</td><td>Ritmo sinusal (normal, taquicardia o bradicardia sinusal)</td></tr>
+<tr><td>Irregularmente irregular, sin P claras</td><td>Fibrilación auricular</td></tr>
+<tr><td>Regularmente irregular</td><td>Bloqueo AV 2º grado Mobitz I, extrasístoles agrupadas</td></tr>
+<tr><td>Regular, P ausente o retrógrada</td><td>Ritmo de la unión / taquicardia de la unión</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+`;
+
+const C1B = `
+<p class="comment">// paso 2 — eje eléctrico</p>
+<div class="diagram-wrap">
+<div class="diagram-caption">// sistema hexaxial de referencia</div>
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="200" cy="200" r="160" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+  <circle cx="200" cy="200" r="106.6" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
+  <circle cx="200" cy="200" r="53.3" fill="none" stroke="var(--border)" stroke-width="1" opacity="0.5"/>
+  <!-- 6 diámetros cada 30° -->
+  <line x1="40" y1="200" x2="360" y2="200" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="61.4" y1="120" x2="338.6" y2="280" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="120" y1="61.4" x2="280" y2="338.6" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="200" y1="40" x2="200" y2="360" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="280" y1="61.4" x2="120" y2="338.6" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="338.6" y1="120" x2="61.4" y2="280" stroke="var(--border)" stroke-width="1.5"/>
+  <!-- flecha vector de ejemplo (eje normal ~+60°) -->
+  <line x1="200" y1="200" x2="280" y2="338.6" stroke="var(--accent)" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="var(--accent)"/>
+    </marker>
+  </defs>
+  <circle cx="200" cy="200" r="3" fill="var(--text-dim)"/>
+  <!-- etiquetas leads con nombre (en negrita, color accent2) + grado (dim) -->
+  <text x="42" y="105" fill="var(--accent2)" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--mono)">aVR</text>
+  <text x="42" y="121" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">-150°</text>
+  <text x="200" y="14" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">-90°</text>
+  <text x="291" y="38" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">-60°</text>
+  <text x="322" y="105" fill="var(--accent2)" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--mono)">aVL</text>
+  <text x="322" y="121" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">-30°</text>
+  <text x="392" y="196" fill="var(--yellow)" font-size="15" font-weight="700" text-anchor="start" font-family="var(--mono)">I</text>
+  <text x="392" y="212" fill="var(--text-dim)" font-size="11" text-anchor="start" font-family="var(--mono)">0°</text>
+  <text x="322" y="300" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">30°</text>
+  <text x="295" y="358" fill="var(--yellow)" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--mono)">II</text>
+  <text x="295" y="374" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">60°</text>
+  <text x="200" y="392" fill="var(--accent2)" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--mono)">aVF</text>
+  <text x="200" y="376" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">90°</text>
+  <text x="105" y="358" fill="var(--yellow)" font-size="15" font-weight="700" text-anchor="middle" font-family="var(--mono)">III</text>
+  <text x="105" y="374" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">120°</text>
+  <text x="42" y="300" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">150°</text>
+  <text x="8" y="196" fill="var(--text-dim)" font-size="11" text-anchor="start" font-family="var(--mono)">±180°</text>
+  <text x="105" y="38" fill="var(--text-dim)" font-size="11" text-anchor="middle" font-family="var(--mono)">-120°</text>
+</svg>
+<p style="color:var(--text-dim);font-size:12px;margin-top:8px;">Flecha verde: ejemplo de eje normal (~+60°). Cada lead tiene un polo positivo (nombrado) y su opuesto a 180° (polo negativo, sin nombre propio).</p>
+</div>
+<h3>Método rápido (I y aVF)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c1b-1">
+<caption>Cuadrantes de eje según I y aVF</caption>
+<thead><tr><th>I</th><th>aVF</th><th>Eje</th></tr></thead>
+<tbody>
+<tr><td>Positivo</td><td>Positivo</td><td>Normal (0° a +90°)</td></tr>
+<tr><td>Positivo</td><td>Negativo</td><td>Desviación izquierda (comprobar con II: si negativo, confirma)</td></tr>
+<tr><td>Negativo</td><td>Positivo</td><td>Desviación derecha</td></tr>
+<tr><td>Negativo</td><td>Negativo</td><td>Eje indeterminado / extremo (\"noroeste\")</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Causas frecuentes</h3>
+<ul>
+<li><strong>Desviación izquierda:</strong> hemibloqueo anterior izquierdo, HVI, IAM inferior antiguo, obesidad.</li>
+<li><strong>Desviación derecha:</strong> hemibloqueo posterior izquierdo, HVD, TEP agudo, EPOC, niños/personas jóvenes (variante normal).</li>
+</ul>
+`;
+
+const C1C = `
+<p class="comment">// paso 3 — intervalos</p>
+<div class="table-wrap"><table class="itable" data-table-id="c1c-1">
+<caption>Intervalos normales y alteraciones clave</caption>
+<thead><tr><th>Intervalo</th><th>Normal</th><th>Alterado — pensar en...</th></tr></thead>
+<tbody>
+<tr><td>PR</td><td>120-200 ms</td><td>Corto: preexcitación (WPW), ritmo de la unión. Largo: bloqueo AV de 1er grado</td></tr>
+<tr><td>QRS</td><td>&lt;120 ms</td><td>Ancho: bloqueo de rama, ritmo ventricular, hiperpotasemia, fármacos (antiarrítmicos IC)</td></tr>
+<tr><td>QT (corregido, Bazett)</td><td>&lt;440 ms (H) / &lt;460 ms (M)</td><td>Largo: riesgo de torsade de pointes — ver fármacos abajo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p><strong>QTc = QT / √RR</strong> (RR en segundos). Regla rápida: si el QT es menor de la mitad del RR precedente, probablemente es normal.</p>
+<div class="callout warn"><span class="tag">HEMATO</span> Fármacos hemato-oncológicos que prolongan el QT — vigilar ECG basal y seriado: <strong>trióxido de arsénico</strong> (LPA — el más relevante, requiere ECG y electrolitos antes de cada dosis), ondansetrón/antieméticos, azoles (voriconazol, posaconazol), quinolonas, metadona, algunos ITKs (nilotinib). Corregir siempre K⁺ y Mg²⁺ antes de iniciar estos fármacos.</div>
+`;
+
+const C1D = `
+<p class="comment">// paso 4 — ondas P, complejo QRS, segmento ST y onda T</p>
+<div class="diagram-wrap">
+<div class="diagram-caption">// diagrama interactivo — haz click en cada onda, segmento o intervalo</div>
+<svg viewBox="0 0 620 240" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="ecgGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--border)" stroke-width="0.5" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <rect x="0" y="0" width="620" height="240" fill="url(#ecgGrid)"/>
+  <line x1="10" y1="150" x2="610" y2="150" stroke="var(--border)" stroke-width="1"/>
+
+  <rect class="hit" data-title="Onda P" data-desc="Despolarización auricular. Duración normal &lt;120 ms. Alterada en crecimiento auricular (P mitrale / P pulmonale) o ausente en fibrilación auricular." x="50" y="30" width="55" height="170" fill="var(--yellow)" opacity="0.12" onclick="highlightPart(this)"/>
+  <rect class="hit" data-title="Segmento PR" data-desc="Desde el final de la onda P hasta el inicio del QRS — representa el retraso fisiológico de la conducción en el nodo AV. Junto con la P forma el intervalo PR (120-200 ms). Prolongado en bloqueo AV de 1er grado." x="105" y="30" width="28" height="170" fill="var(--text-dim)" opacity="0.18" onclick="highlightPart(this)"/>
+  <rect class="hit" data-title="Complejo QRS" data-desc="Despolarización ventricular. Duración normal &lt;120 ms. Ancho en bloqueos de rama, ritmo de origen ventricular o hiperpotasemia grave." x="126" y="20" width="58" height="190" fill="var(--accent)" opacity="0.14" onclick="highlightPart(this)"/>
+  <rect class="hit" data-title="Segmento ST" data-desc="Desde el final del QRS hasta el inicio de la onda T — normalmente isoeléctrico (a la altura de la línea de base). Elevado en IAMCEST o pericarditis; descendido en isquemia subendocárdica." x="184" y="30" width="30" height="170" fill="var(--text-dim)" opacity="0.18" onclick="highlightPart(this)"/>
+  <rect class="hit" data-title="Onda T" data-desc="Repolarización ventricular. Picuda y simétrica en hiperpotasemia; aplanada o invertida en isquemia o hipopotasemia." x="214" y="30" width="55" height="170" fill="var(--accent3)" opacity="0.14" onclick="highlightPart(this)"/>
+
+  <path d="M10,150 L50,150 Q77,120 105,150 L126,150 L140,160 L155,40 L170,175 L184,150 L214,150 Q242,110 269,150 L610,150" fill="none" stroke="var(--text)" stroke-width="2"/>
+
+  <text x="77" y="112" fill="var(--yellow)" font-size="12" text-anchor="middle" font-family="var(--mono)">P</text>
+  <text x="155" y="30" fill="var(--accent)" font-size="12" text-anchor="middle" font-family="var(--mono)">QRS</text>
+  <text x="242" y="102" fill="var(--accent3)" font-size="12" text-anchor="middle" font-family="var(--mono)">T</text>
+
+  <g class="hit" data-title="Intervalo QT" data-desc="Desde el inicio del QRS hasta el final de la onda T — representa toda la despolarización + repolarización ventricular. Se corrige por frecuencia cardiaca (QTc, fórmula de Bazett: QT/√RR). Alargado = riesgo de torsade de pointes (ver Cardiología → Arritmias → Arritmias ventriculares)." onclick="highlightPart(this)">
+    <rect x="126" y="188" width="143" height="34" fill="var(--accent2)" opacity="0.05"/>
+    <line x1="126" y1="205" x2="269" y2="205" stroke="var(--accent2)" stroke-width="2"/>
+    <line x1="126" y1="198" x2="126" y2="212" stroke="var(--accent2)" stroke-width="2"/>
+    <line x1="269" y1="198" x2="269" y2="212" stroke="var(--accent2)" stroke-width="2"/>
+    <text x="197" y="222" fill="var(--accent2)" font-size="11" text-anchor="middle" font-family="var(--mono)">QT</text>
+  </g>
+</svg>
+<div class="diagram-info">Selecciona una onda, segmento o intervalo del trazado para ver su descripción aquí.</div>
+</div>
+<h3>Onda P — crecimiento auricular</h3>
+<ul>
+<li><strong>P mitrale</strong> (crecimiento AI): P ancha y bimodal en II, componente negativo profundo en V1.</li>
+<li><strong>P pulmonale</strong> (crecimiento AD): P alta y picuda (&gt;2.5 mm) en II, III, aVF.</li>
+</ul>
+<h3>Complejo QRS</h3>
+<ul>
+<li><strong>Ondas Q patológicas:</strong> anchura ≥40 ms o profundidad ≥25% de la R siguiente → sugieren necrosis miocárdica previa.</li>
+<li><strong>Hipertrofia ventricular izquierda</strong> (criterio de Sokolow-Lyon): S en V1 + R en V5 o V6 ≥ 35 mm.</li>
+<li><strong>Progresión de onda R</strong> en precordiales: su pérdida sugiere IAM anterior antiguo.</li>
+</ul>
+<h3>Segmento ST y onda T</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c1d-1">
+<caption>Patrones de ST-T y su significado</caption>
+<thead><tr><th>Hallazgo</th><th>Pensar en...</th></tr></thead>
+<tbody>
+<tr><td>Elevación ST convexa (\"lomo de delfín\"), localizada por territorio</td><td>IAM con elevación del ST (SCACEST)</td></tr>
+<tr><td>Elevación ST cóncava difusa + descenso del PR</td><td>Pericarditis aguda</td></tr>
+<tr><td>Descenso del ST horizontal/descendente</td><td>Isquemia subendocárdica (SCASEST)</td></tr>
+<tr><td>T picudas, simétricas y altas</td><td>Hiperpotasemia (ver <span class="inline-code">Nefrología → 4a</span>)</td></tr>
+<tr><td>T aplanadas o invertidas</td><td>Isquemia, hipopotasemia, sobrecarga ventricular</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+`;
+
+const C1E = `
+<p class="comment">// paso 5 — patrones patológicos que hay que saber reconocer sí o sí</p>
+<div class="table-wrap"><table class="itable" data-table-id="c1e-1">
+<caption>Patrones clave y su territorio/significado</caption>
+<thead><tr><th>Patrón</th><th>Derivaciones / claves</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td>IAM anterior</td><td>Elevación ST en V1-V4</td><td>Oclusión de descendente anterior</td></tr>
+<tr><td>IAM inferior</td><td>Elevación ST en II, III, aVF</td><td>Oclusión de coronaria derecha (o circunfleja)</td></tr>
+<tr><td>IAM lateral</td><td>Elevación ST en I, aVL, V5-V6</td><td>Oclusión de circunfleja o diagonal</td></tr>
+<tr><td>BRIHH (bloqueo rama izq.)</td><td>QRS ancho, QS/rS en V1, R ancha mellada en V6 (\"orejas de conejo\")</td><td>Puede enmascarar IAM (criterios de Sgarbossa)</td></tr>
+<tr><td>BRDHH (bloqueo rama der.)</td><td>QRS ancho, rSR' en V1, S ancha en V6</td><td>Frecuente y muchas veces benigno; buscar cardiopatía de base</td></tr>
+<tr><td>TEP agudo</td><td>Taquicardia sinusal (lo más frecuente), patrón S1Q3T3, BRDHH nuevo</td><td>Sospecha de tromboembolismo pulmonar — alta relevancia en pacientes oncológicos</td></tr>
+<tr><td>WPW (preexcitación)</td><td>PR corto + onda delta + QRS ancho</td><td>Riesgo de taquiarritmias, evitar frenadores del nodo AV si FA preexcitada</td></tr>
+<tr><td>Pericarditis</td><td>Elevación ST cóncava difusa + descenso PR difuso</td><td>Descartar derrame asociado (ver apartado 7)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout"><span class="tag">MÉTODO</span> Orden mental recomendado en cada ECG: 1) ritmo y frecuencia → 2) eje → 3) intervalos (PR, QRS, QT) → 4) ondas P → 5) QRS (hipertrofias, Q patológicas, bloqueos) → 6) ST-T → 7) conclusión + comparar con ECG previo si existe.</div>
+`;
+
+const C2A = `
+<p class="comment">// fibrilación auricular</p>
+<h3>Diagnóstico</h3>
+<p>Ritmo irregularmente irregular, sin ondas P discernibles (línea de base fibrilatoria). Puede ser paroxística, persistente o permanente.</p>
+<h3>Manejo — las 3 preguntas clave</h3>
+<ol>
+<li><strong>¿Está inestable?</strong> (hipotensión, angina, insuficiencia cardiaca aguda, bajo nivel de consciencia) → cardioversión eléctrica urgente.</li>
+<li><strong>Control de frecuencia vs control de ritmo:</strong> control de frecuencia (betabloqueantes, calcioantagonistas no dihidropiridínicos, digoxina si FEVI reducida) suele ser la estrategia inicial en la mayoría de pacientes agudos.</li>
+<li><strong>¿Necesita anticoagulación?</strong> Calcular <strong>CHA2DS2-VASc</strong> (riesgo embólico) y <strong>HAS-BLED</strong> (riesgo hemorrágico) — ver también apartado 8 sobre particularidades en el paciente hemato-oncológico.</li>
+</ol>
+<div class="diagram-wrap">
+<div class="diagram-caption">// herramienta interactiva de decisión — guía rápida, no sustituye el juicio clínico</div>
+<div class="fa-step" data-step="1">
+  <p><strong>¿Está hemodinámicamente inestable?</strong> (hipotensión, angina, insuficiencia cardiaca aguda, bajo nivel de consciencia)</p>
+  <button class="flow-btn" onclick="faGoTo(this,'unstable')">Sí, inestable</button>
+  <button class="flow-btn" onclick="faGoTo(this,'2')">No, estable</button>
+</div>
+<div class="fa-step" data-step="unstable" hidden>
+  <div class="callout warn"><span class="tag">URGENTE</span> Cardioversión eléctrica sincronizada inmediata. No perder tiempo intentando control de frecuencia primero.</div>
+  <button class="flow-btn" onclick="faGoTo(this,'1')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="2" hidden>
+  <p><strong>Paciente estable.</strong> La estrategia inicial habitual es el <em>control de frecuencia</em> (betabloqueante o calcioantagonista no dihidropiridínico; digoxina si FEVI reducida), salvo indicación específica de control de ritmo (primer episodio reciente, FA muy sintomática pese a frecuencia controlada).</p>
+  <button class="flow-btn" onclick="faGoTo(this,'3')">Siguiente: anticoagulación →</button>
+  <button class="flow-btn" onclick="faGoTo(this,'1')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="3" hidden>
+  <p><strong>¿Cuál es el CHA₂DS₂-VASc estimado?</strong> (ver tabla de puntuación abajo)</p>
+  <button class="flow-btn" onclick="faGoTo(this,'low')">0 (hombre) / 1 (mujer)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'mid')">1 (hombre) / 2 (mujer)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'high')">≥2 (hombre) / ≥3 (mujer)</button>
+</div>
+<div class="fa-step" data-step="low" hidden>
+  <div class="callout">Riesgo bajo: anticoagulación generalmente <strong>no indicada</strong>.</div>
+  <button class="flow-btn" onclick="faGoTo(this,'1')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="mid" hidden>
+  <div class="callout">Riesgo intermedio: considerar anticoagulación de forma <strong>individualizada</strong> según preferencias del paciente y riesgo hemorrágico (HAS-BLED).</div>
+  <button class="flow-btn" onclick="faGoTo(this,'1')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="high" hidden>
+  <div class="callout warn"><span class="tag">INDICADO</span> Anticoagulación recomendada (habitualmente ACOD), salvo contraindicación — repasa el apartado 8 para los matices en pacientes con trombopenia.</div>
+  <button class="flow-btn" onclick="faGoTo(this,'1')">↺ reiniciar</button>
+</div>
+</div>
+<div class="table-wrap"><table class="itable" data-table-id="c2a-1">
+<caption>CHA2DS2-VASc (resumen)</caption>
+<thead><tr><th>Factor</th><th>Puntos</th></tr></thead>
+<tbody>
+<tr><td>Insuficiencia cardiaca / disfunción VI</td><td>1</td></tr>
+<tr><td>Hipertensión</td><td>1</td></tr>
+<tr><td>Edad ≥75</td><td>2</td></tr>
+<tr><td>Diabetes</td><td>1</td></tr>
+<tr><td>Ictus/AIT/embolismo previo</td><td>2</td></tr>
+<tr><td>Enfermedad vascular</td><td>1</td></tr>
+<tr><td>Edad 65-74</td><td>1</td></tr>
+<tr><td>Sexo femenino</td><td>1</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p>Anticoagular (habitualmente con ACOD) si ≥2 (hombres) / ≥3 (mujeres); considerar individualmente si 1/2 respectivamente. Cardioversión &gt;48h de evolución o desconocida: requiere anticoagulación previa ≥3 semanas o ecocardio transesofágico para descartar trombo en orejuela.</p>
+<div class="callout warn"><span class="tag">HEMATO</span> Ibrutinib y otros inhibidores de BTK aumentan significativamente el riesgo de FA de novo — sospechar en pacientes con LLC/linfoma del manto en tratamiento que debutan con palpitaciones.</div>
+`;
+
+const C2B = `
+<p class="comment">// taquicardias supraventriculares (TSV)</p>
+<h3>Reconocimiento</h3>
+<p>QRS estrecho, rítmico, de inicio y fin súbitos, FC habitualmente 150-220 lpm. La más frecuente es la taquicardia por reentrada intranodal (TRIN).</p>
+<h3>Manejo agudo</h3>
+<ol>
+<li><strong>Inestable</strong> → cardioversión eléctrica sincronizada.</li>
+<li><strong>Estable:</strong>
+  <ul>
+    <li>Maniobras vagales (Valsalva modificado, masaje del seno carotídeo si no hay soplo/riesgo).</li>
+    <li><strong>Adenosina IV</strong> en bolo rápido (6 mg → 12 mg si no responde), avisar al paciente de sensación transitoria de \"muerte inminente\"/opresión — normal y de segundos de duración.</li>
+    <li>Si recurre o falla: calcioantagonistas no dihidropiridínicos o betabloqueantes IV.</li>
+  </ul>
+</li>
+</ol>
+<div class="callout warn"><span class="tag">OJO</span> Si el QRS es ancho y hay dudas entre TV y TSV con conducción aberrante, tratar como <strong>taquicardia ventricular</strong> hasta demostrar lo contrario (más frecuente y potencialmente letal) — evitar verapamilo si hay duda.</div>
+`;
+
+const C2C = `
+<p class="comment">// bradiarritmias y bloqueos AV</p>
+<div class="table-wrap"><table class="itable" data-table-id="c2c-1">
+<caption>Bloqueos AV</caption>
+<thead><tr><th>Tipo</th><th>ECG</th><th>Manejo</th></tr></thead>
+<tbody>
+<tr><td>1er grado</td><td>PR &gt;200ms constante, todos los P conducen</td><td>Benigno, no requiere tratamiento habitualmente</td></tr>
+<tr><td>2º grado Mobitz I (Wenckebach)</td><td>Alargamiento progresivo del PR hasta que un P no conduce</td><td>Habitualmente benigno (nivel nodal), observación</td></tr>
+<tr><td>2º grado Mobitz II</td><td>PR constante con bloqueo súbito de un P sin alargamiento previo</td><td>Riesgo de progresión a bloqueo completo — valorar marcapasos</td></tr>
+<tr><td>3er grado (completo)</td><td>Disociación AV completa, P y QRS sin relación</td><td>Marcapasos (temporal si inestable, definitivo después)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Manejo de la bradicardia sintomática aguda</h3>
+<ol>
+<li>Atropina IV (0.5 mg, repetir hasta 3 mg) — primera línea.</li>
+<li>Si no responde: marcapasos transcutáneo, o perfusión de adrenalina/dopamina como puente.</li>
+<li>Marcapasos transvenoso/definitivo según causa y persistencia.</li>
+</ol>
+<p><strong>Causas a revisar siempre:</strong> fármacos (betabloqueantes, digoxina, calcioantagonistas), hiperpotasemia, hipotiroidismo, isquemia inferior, hipertonía vagal.</p>
+`;
+
+const C2D = `
+<p class="comment">// arritmias ventriculares</p>
+<h3>Taquicardia ventricular (TV)</h3>
+<ul>
+<li>QRS ancho (&gt;120ms), regular, FC &gt;100 lpm, de origen ventricular.</li>
+<li><strong>Inestable</strong> → cardioversión eléctrica sincronizada inmediata.</li>
+<li><strong>Estable:</strong> antiarrítmicos IV (amiodarona de elección en la mayoría de contextos), tratar causa de base (isquemia, alteración electrolítica).</li>
+</ul>
+<h3>Fibrilación ventricular (FV) / TV sin pulso</h3>
+<p>Parada cardiorrespiratoria — RCP inmediata + desfibrilación no sincronizada según algoritmo de soporte vital avanzado.</p>
+<h3>Torsade de pointes</h3>
+<ul>
+<li>TV polimórfica con QRS que \"rota\" alrededor de la línea isoeléctrica, típicamente sobre <strong>QT largo</strong>.</li>
+<li><strong>Tratamiento:</strong> <strong>sulfato de magnesio IV</strong> (aunque el Mg sea normal), corregir K⁺ (objetivo alto-normal), retirar fármacos que prolonguen QT, marcapasos/isoproterenol si bradicardia-dependiente.</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> Repasar apartado 1c: trióxido de arsénico, azoles y antieméticos son causas frecuentes de QT largo iatrogénico en plantas de hematología — monitorizar ECG y electrolitos de forma proactiva, no reactiva.</div>
+`;
+
+const C3 = `
+<p class="comment">// síndrome coronario agudo (SCA)</p>
+<h3>Clasificación inicial</h3>
+<ul>
+<li><strong>SCACEST:</strong> elevación persistente del ST (o BRIHH nuevo) + clínica compatible → reperfusión urgente (ICP primaria &lt;90-120 min, o fibrinólisis si no accesible a tiempo).</li>
+<li><strong>SCASEST:</strong> descenso del ST, inversión de T, o ECG normal con troponina elevada → estratificación de riesgo y manejo invasivo según timing (urgente/precoz/diferido).</li>
+<li><strong>Angina inestable:</strong> clínica compatible sin elevación de troponina.</li>
+</ul>
+<h3>Manejo inicial (recordatorio, no sustituye protocolo local)</h3>
+<ul>
+<li>Oxígeno solo si SatO2 &lt;90%, nitratos si dolor persistente y TA lo permite, analgesia.</li>
+<li>Doble antiagregación (AAS + segundo antiagregante) y anticoagulación según protocolo — <strong>ver matices en trombopenia, apartado 8</strong>.</li>
+<li>Betabloqueantes si no hay contraindicación (IC aguda descompensada, bradicardia, broncoespasmo activo).</li>
+<li>Estatina de alta intensidad.</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> Decisiones de doble antiagregación/anticoagulación en SCA se complican mucho con trombopenia (quimioterapia, infiltración medular, PTI) o coagulopatía — siempre discusión conjunta cardiología-hematología, individualizar umbrales de plaquetas para cada fármaco/procedimiento.</div>
+`;
+
+const C4 = `
+<p class="comment">// insuficiencia cardiaca — conceptos básicos</p>
+<h3>Clasificación por FEVI</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c4-1">
+<caption>Tipos de insuficiencia cardiaca</caption>
+<thead><tr><th>Tipo</th><th>FEVI</th></tr></thead>
+<tbody>
+<tr><td>IC-FEr (reducida)</td><td>≤40%</td></tr>
+<tr><td>IC-FElr (levemente reducida)</td><td>41-49%</td></tr>
+<tr><td>IC-FEp (preservada)</td><td>≥50%</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Clínica y clasificación funcional (NYHA)</h3>
+<p>Disnea de esfuerzo/reposo, ortopnea, disnea paroxística nocturna, edemas, crepitantes, ingurgitación yugular. NYHA I (asintomático) a IV (síntomas en reposo).</p>
+<h3>Pilares del tratamiento en IC-FEr (\"the four pillars\")</h3>
+<ol>
+<li>IECA/ARA-II o <strong>ARNI</strong> (sacubitrilo-valsartán, de elección si tolerado).</li>
+<li>Betabloqueante (bisoprolol, carvedilol, metoprolol succinato).</li>
+<li>Antagonista del receptor mineralocorticoide (espironolactona, eplerenona).</li>
+<li><strong>iSGLT2</strong> (dapagliflozina/empagliflozina) — beneficio independiente de diabetes, ya establecido también en IC-FEp.</li>
+</ol>
+<h3>Manejo de la descompensación aguda</h3>
+<ul>
+<li>Diuréticos de asa IV (furosemida) ajustados a respuesta, vigilar función renal y electrolitos.</li>
+<li>Vasodilatadores si TA lo permite y congestión predominante.</li>
+<li>Identificar y tratar el factor precipitante (arritmia, isquemia, infección, abandono de tratamiento, anemia/transfusión en contexto hemato).</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> La anemia grave y las transfusiones rápidas/masivas pueden precipitar o descompensar una IC de base — vigilar signos de sobrecarga durante transfusiones en pacientes con cardiopatía conocida (transfundir más lento, considerar diurético asociado).</div>
+`;
+
+const C5 = `
+<p class="comment">// cardiotoxicidad por quimioterapia y radioterapia — clave para hematología</p>
+<h3>Antraciclinas (doxorrubicina, daunorrubicina, idarrubicina)</h3>
+<ul>
+<li>Toxicidad <strong>dosis-acumulada dependiente</strong>, puede ser irreversible (daño mitocondrial/estrés oxidativo con muerte de cardiomiocitos).</li>
+<li>Monitorización: ecocardiograma (FEVI, strain longitudinal global — más sensible y precoz que la FEVI) basal y periódico, troponina seriada en protocolos de alto riesgo.</li>
+<li><strong>Dexrazoxano:</strong> cardioprotector quelante de hierro, considerado en dosis acumuladas altas o retratamiento.</li>
+<li>Puede presentarse como IC aguda durante el tratamiento o, más frecuentemente, de forma tardía (meses-años después).</li>
+</ul>
+<h3>Otros agentes relevantes</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c5-1">
+<caption>Toxicidad cardiovascular por fármaco</caption>
+<thead><tr><th>Fármaco</th><th>Toxicidad principal</th></tr></thead>
+<tbody>
+<tr><td>Trastuzumab</td><td>Disfunción de VI, habitualmente reversible al suspender; no acumulativa como antraciclinas</td></tr>
+<tr><td>Ciclofosfamida (altas dosis)</td><td>Miocarditis hemorrágica, IC aguda</td></tr>
+<tr><td>Ibrutinib / ITKs de BTK</td><td>Fibrilación auricular, HTA</td></tr>
+<tr><td>Trióxido de arsénico</td><td>Prolongación del QT, torsade de pointes</td></tr>
+<tr><td>5-fluorouracilo</td><td>Vasoespasmo coronario / isquemia</td></tr>
+<tr><td>Inhibidores de VEGF</td><td>Hipertensión arterial, eventos trombóticos</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Radioterapia mediastínica (linfomas)</h3>
+<ul>
+<li>Toxicidad <strong>tardía</strong> (años después): enfermedad coronaria acelerada, valvulopatías (sobre todo aórtica/mitral), <strong>pericarditis constrictiva</strong>, disfunción del sistema de conducción.</li>
+<li>Cribado cardiológico a largo plazo en supervivientes de linfoma tratados con RT mediastínica.</li>
+</ul>
+<div class="callout"><span class="tag">PRÁCTICA</span> Antes de iniciar quimioterapia cardiotóxica: ecocardiograma basal, control de factores de riesgo cardiovascular, y valorar interconsulta a cardio-oncología en pacientes con cardiopatía previa o dosis acumuladas altas previstas.</div>
+`;
+
+const C6 = `
+<p class="comment">// amiloidosis cardiaca — muy relevante en gammapatías monoclonales / mieloma</p>
+<h3>Concepto</h3>
+<p>Depósito de proteína amiloide en el intersticio miocárdico. Los dos tipos principales: <strong>AL</strong> (cadenas ligeras de inmunoglobulina — discrasia de células plasmáticas, la de mayor interés para hematología) y <strong>ATTR</strong> (transtiretina, wild-type o hereditaria).</p>
+<h3>Sospecha clínica</h3>
+<ul>
+<li>Insuficiencia cardiaca con <strong>FEVI conservada</strong> y paredes ventriculares engrosadas (patrón restrictivo).</li>
+<li>Síntomas de "banderas rojas": síndrome del túnel carpiano bilateral, hipotensión ortostática, macroglosia, equimosis periorbitaria, neuropatía periférica, proteinuria (en AL).</li>
+<li>Discordancia entre grosor parietal en ecocardiograma y bajo voltaje en el ECG (muy característico).</li>
+</ul>
+<h3>Pruebas complementarias clave</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c6-1">
+<caption>Hallazgos característicos</caption>
+<thead><tr><th>Prueba</th><th>Hallazgo</th></tr></thead>
+<tbody>
+<tr><td>ECG</td><td>Bajo voltaje generalizado + patrón de pseudoinfarto (Q en precordiales sin cardiopatía isquémica)</td></tr>
+<tr><td>Ecocardiograma</td><td>Hipertrofia ventricular simétrica, patrón \"granular esparcido\" (sparkling), strain longitudinal con patrón \"cherry on top\" (respeto apical)</td></tr>
+<tr><td>Biomarcadores</td><td>NT-proBNP y troponina elevados — base de la estadificación pronóstica (Mayo)</td></tr>
+<tr><td>Estudio hematológico</td><td>Cadenas ligeras libres en suero, inmunofijación en sangre/orina — imprescindible para diferenciar AL de ATTR</td></tr>
+<tr><td>Gammagrafía con pirofosfato</td><td>Captación cardiaca intensa sugiere ATTR (siempre descartar antes AL, pues el tratamiento es radicalmente distinto)</td></tr>
+<tr><td>Biopsia (grasa abdominal, médula ósea o endomiocárdica)</td><td>Confirmación histológica con tinción rojo Congo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout warn"><span class="tag">HEMATO</span> Ante toda gammapatía monoclonal con clínica de IC-FEp inexplicada, pensar activamente en amiloidosis AL — el diagnóstico precoz cambia radicalmente el pronóstico, ya que el tratamiento es hematológico (terapia dirigida a la clona de células plasmáticas: bortezomib, daratumumab, etc.), no cardiológico puro.</div>
+`;
+
+const C7 = `
+<p class="comment">// derrame pericárdico y taponamiento cardiaco</p>
+<h3>Causas relevantes en el paciente onco-hematológico</h3>
+<ul>
+<li>Infiltración pericárdica maligna: linfomas, leucemias, metástasis de tumores sólidos.</li>
+<li>Pericarditis relacionada con radioterapia mediastínica (aguda o tardía/constrictiva).</li>
+<li>Idiopática/viral, urémica (ver Nefrología), post-infarto (Dressler), autoinmune, yatrogénica (post-procedimiento).</li>
+</ul>
+<h3>Taponamiento cardiaco — reconocimiento</h3>
+<ul>
+<li><strong>Tríada de Beck:</strong> hipotensión, ingurgitación yugular, tonos cardiacos apagados (poco sensible en conjunto, no esperar a verla completa).</li>
+<li><strong>Pulso paradójico:</strong> caída &gt;10 mmHg de la TA sistólica con la inspiración.</li>
+<li>Taquicardia, disnea, signos de bajo gasto.</li>
+<li>ECG: puede mostrar <strong>alternancia eléctrica</strong> (variación de amplitud del QRS latido a latido) en derrames grandes.</li>
+</ul>
+<h3>Ecocardiograma — hallazgos de taponamiento</h3>
+<ul>
+<li>Colapso diastólico de aurícula/ventrículo derecho.</li>
+<li>Vena cava inferior dilatada sin colapso inspiratorio.</li>
+<li>Variación respiratoria exagerada de los flujos mitral/tricuspídeo.</li>
+</ul>
+<h3>Manejo</h3>
+<ul>
+<li><strong>Pericardiocentesis urgente</strong> (guiada por ecocardiografía) si compromiso hemodinámico — diagnóstica (citología si sospecha maligna) y terapéutica.</li>
+<li>Expansión de volumen como puente mientras se organiza el drenaje, evitar ventilación con presión positiva si es posible (empeora el retorno venoso).</li>
+<li>Ventana pericárdica quirúrgica o pericardiocentesis con catéter si derrame recidivante (frecuente en etiología maligna).</li>
+</ul>
+`;
+
+const C8 = `
+<p class="comment">// anticoagulación y antiagregación en el paciente onco-hematológico</p>
+<h3>Enfermedad tromboembólica venosa asociada a cáncer</h3>
+<ul>
+<li>Los pacientes oncológicos (especialmente neoplasias hematológicas activas y en tratamiento) tienen alto riesgo de ETV y también de sangrado.</li>
+<li><strong>HBPM</strong> tradicionalmente de elección; <strong>ACOD</strong> (apixabán, rivaroxabán, edoxabán) hoy también recomendados en muchos casos salvo alto riesgo hemorrágico (tumores digestivos/urológicos no resecados, interacciones significativas).</li>
+<li>Duración habitual mínima 3-6 meses, prolongar mientras el cáncer esté activo.</li>
+</ul>
+<h3>Anticoagulación con trombopenia — el gran dilema práctico</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c8-1">
+<caption>Orientación general según cifra de plaquetas (individualizar siempre)</caption>
+<thead><tr><th>Plaquetas</th><th>Actitud orientativa</th></tr></thead>
+<tbody>
+<tr><td>&gt;50.000/µL</td><td>Anticoagulación a dosis plena generalmente segura</td></tr>
+<tr><td>25.000-50.000/µL</td><td>Individualizar: reducir dosis, o soporte transfusional de plaquetas para mantener anticoagulación plena en trombosis de alto riesgo (p. ej. TEP reciente)</td></tr>
+<tr><td>&lt;25.000/µL</td><td>Alto riesgo hemorrágico — valorar suspensión temporal, filtro de vena cava si TEV muy reciente y proximal, decisión conjunta con hematología</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Trombocitopenia inducida por heparina (HIT)</h3>
+<ul>
+<li>Sospechar si descenso &gt;50% de plaquetas 5-10 días tras iniciar heparina (o antes si exposición previa), con o sin trombosis nueva (paradójicamente protrombótico).</li>
+<li>Score 4T para probabilidad pre-test; confirmación con anticuerpos anti-PF4/heparina ± test funcional.</li>
+<li><strong>Manejo:</strong> suspender toda heparina (incluidos lavados de catéter) y anticoagular con un no-heparínico (argatrobán, fondaparinux, o ACOD según contexto) — nunca solo antiagregar.</li>
+</ul>
+<h3>Fibrilación auricular + trombopenia</h3>
+<p>Reevaluar CHA2DS2-VASc y HAS-BLED conjuntamente con el recuento de plaquetas y la causa de la trombopenia (transitoria por quimioterapia vs. crónica); decisión individualizada, a menudo con reducción de dosis de ACOD o anticoagulación transitoriamente suspendida durante nadires profundos con seguimiento estrecho.</p>
+`;
+
+const C9 = `
+<p class="comment">// biomarcadores cardiacos</p>
+<h3>Troponina (T o I de alta sensibilidad)</h3>
+<ul>
+<li>Marcador de daño miocárdico, no es sinónimo automático de SCA — hay que interpretar siempre en el contexto clínico y su cinética (ascenso/descenso seriado).</li>
+<li><strong>Causas de elevación distintas al SCA</strong> (especialmente relevantes en hematología): cardiotoxicidad por quimioterapia, TEP, sepsis/shock, insuficiencia renal (aclaramiento reducido — ver Nefrología), miocarditis, taquiarritmias sostenidas, insuficiencia cardiaca descompensada.</li>
+<li>La <strong>cinética</strong> (cambio significativo entre determinaciones seriadas) es lo que distingue el daño agudo de la elevación crónica basal.</li>
+</ul>
+<h3>NT-proBNP / BNP</h3>
+<ul>
+<li>Se libera por distensión de la pared ventricular — útil para apoyar/descartar insuficiencia cardiaca ante disnea de causa incierta.</li>
+<li><strong>Elevado falsamente</strong> (sin IC) en: ERC/IRA (aclaramiento renal reducido), edad avanzada, fibrilación auricular, sepsis.</li>
+<li><strong>Falsamente bajo</strong> en obesidad.</li>
+<li>Forma parte de la estadificación pronóstica en amiloidosis cardiaca (ver apartado 6).</li>
+</ul>
+`;
+
+const C10 = `
+<p class="comment">// hipertensión arterial — manejo básico</p>
+<h3>Clasificación</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c10-1">
+<caption>Categorías de presión arterial</caption>
+<thead><tr><th>Categoría</th><th>TAS/TAD (mmHg)</th></tr></thead>
+<tbody>
+<tr><td>Normal</td><td>&lt;120/80</td></tr>
+<tr><td>Elevada</td><td>120-129 / &lt;80</td></tr>
+<tr><td>HTA grado 1</td><td>130-139 / 80-89</td></tr>
+<tr><td>HTA grado 2</td><td>≥140/90</td></tr>
+<tr><td>Crisis hipertensiva</td><td>≥180/120</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<h3>Urgencia vs emergencia hipertensiva</h3>
+<ul>
+<li><strong>Urgencia:</strong> TA muy elevada <em>sin</em> daño de órgano diana agudo → reducción gradual en 24-48h con tratamiento oral.</li>
+<li><strong>Emergencia:</strong> TA elevada <em>con</em> daño de órgano diana agudo (encefalopatía, edema agudo de pulmón, disección aórtica, SCA, IRA) → reducción controlada con fármacos IV en UCI/monitorización.</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> Los inhibidores de VEGF/tirosina-quinasa (bevacizumab, sunitinib, etc.) y el ácido tranexámico/corticoides a dosis altas pueden inducir o empeorar HTA — vigilar TA de forma proactiva durante estos tratamientos.</div>
+`;
+
+const C11 = `
+<p class="comment">// soplos, valvulopatías y endocarditis — aproximación básica</p>
+<h3>Aproximación a un soplo</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c11-1">
+<caption>Soplos sistólicos vs diastólicos más frecuentes</caption>
+<thead><tr><th>Tipo</th><th>Soplo</th><th>Foco / irradiación</th></tr></thead>
+<tbody>
+<tr><td>Sistólico</td><td>Estenosis aórtica</td><td>Foco aórtico, irradia a carótidas</td></tr>
+<tr><td>Sistólico</td><td>Insuficiencia mitral</td><td>Foco mitral (ápex), irradia a axila</td></tr>
+<tr><td>Diastólico</td><td>Insuficiencia aórtica</td><td>Foco aórtico/borde esternal izquierdo, decrescendo</td></tr>
+<tr><td>Diastólico</td><td>Estenosis mitral</td><td>Ápex, retumbo, mejor en decúbito lateral izquierdo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<p>Regla general: <strong>casi todos los soplos diastólicos son patológicos</strong> y requieren estudio; muchos soplos sistólicos leves son funcionales/fisiológicos (frecuentes en estados hiperdinámicos como anemia o fiebre — muy relevante en planta de hematología).</p>
+<h3>Endocarditis infecciosa — cuándo sospechar</h3>
+<ul>
+<li>Fiebre persistente/recurrente + soplo nuevo o cambiante, sobre todo en paciente con catéter venoso central de larga duración, válvula protésica, o neutropenia febril prolongada.</li>
+<li>Fenómenos embólicos/inmunológicos: petequias, nódulos de Osler, lesiones de Janeway, manchas de Roth, hematuria.</li>
+<li><strong>Diagnóstico:</strong> hemocultivos seriados (idealmente antes de antibioterapia) + ecocardiograma (transtorácico inicial, transesofágico si alta sospecha y TTE no concluyente) — criterios de Duke modificados.</li>
+</ul>
+<div class="callout warn"><span class="tag">HEMATO</span> En neutropenia febril con catéter central, la endocarditis relacionada con catéter es un diagnóstico diferencial a mantener activo si persiste la fiebre/bacteriemia pese a antibioterapia adecuada y retirada del catéter — no asumir siempre que es \"solo\" bacteriemia relacionada con catéter sin complicaciones.</div>
+`;
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+const tabsEl = document.getElementById('tabs');
+const treeEl = document.getElementById('sectionTree');
+const welcomeEl = document.getElementById('welcome');
+const contentWrapEl = document.getElementById('contentWrap');
+const sectionTitleEl = document.getElementById('sectionTitle');
+const sectionContentEl = document.getElementById('sectionContent');
+const breadcrumbEl = document.getElementById('breadcrumb');
+const saveIndicator = document.getElementById('saveIndicator');
+const editToggle = document.getElementById('editToggle');
+const toastEl = document.getElementById('toast');
+
+let editMode = false;
+let currentLeaf = null;
+let currentPath = [];
+
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 1800);
+}
+
+// ---- tabs ----
+TABS.forEach((t,i)=>{
+  const b = document.createElement('button');
+  b.className = 'tab-btn' + (i===0?' active':'');
+  b.textContent = t.label;
+  b.onclick = ()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderSidebarTree(t.id);
+  };
+  tabsEl.appendChild(b);
+});
+
+// ---- sidebar tree ----
+function buildTree(node, depth, path){
+  const ul = document.createElement('ul');
+  ul.className = 'tree';
+  (node.children||[]).forEach(child=>{
+    const li = document.createElement('li');
+    li.className = 'depth-'+depth;
+    const row = document.createElement('div');
+    row.className = 'node' + (child.leaf ? ' leaf' : '');
+    const newPath = path.concat(child.title);
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    caret.textContent = child.children ? '▸' : '';
+    const bullet = document.createElement('span');
+    bullet.className = 'bullet';
+    bullet.textContent = child.leaf ? '●' : '▾'.slice(0,0) || '■';
+    if(!child.leaf) bullet.textContent = '■';
+    const label = document.createElement('span');
+    label.textContent = child.title;
+    row.appendChild(caret);
+    row.appendChild(bullet);
+    row.appendChild(label);
+    if(child.hem){
+      const hemTag = document.createElement('span');
+      hemTag.className = 'hem-tag';
+      hemTag.textContent = 'HEM';
+      row.appendChild(hemTag);
+    }
+    li.appendChild(row);
+
+    if(child.children){
+      const childUl = buildTree(child, depth+1, newPath);
+      childUl.classList.add('children');
+      li.appendChild(childUl);
+      row.onclick = ()=>{
+        row.classList.toggle('open');
+        childUl.classList.toggle('open');
+      };
+    }
+    if(child.leaf){
+      row.onclick = ()=>{
+        document.querySelectorAll('.node.active').forEach(n=>n.classList.remove('active'));
+        row.classList.add('active');
+        openLeaf(child, newPath);
+      };
+    }
+    ul.appendChild(li);
+  });
+  return ul;
+}
+
+function renderSidebarTree(tabId){
+  const rootNode = TREE[tabId];
+  treeEl.innerHTML = '';
+  const rootTree = buildTree(rootNode, 1, [rootNode.title]);
+  treeEl.appendChild(rootTree);
+  rootTree.classList.add('open');
+  currentLeaf = null;
+  welcomeEl.style.display = 'block';
+  contentWrapEl.style.display = 'none';
+}
+renderSidebarTree(TABS[0].id);
+
+// ---- storage (con fallback en memoria si localStorage no está disponible) ----
+const STORE_PREFIX = 'nefro_blog_';
+function storageKey(id){ return STORE_PREFIX + id; }
+const memStore = {};
+const safeStorage = {
+  getItem(k){ try{ return localStorage.getItem(k); }catch(e){ return memStore.hasOwnProperty(k) ? memStore[k] : null; } },
+  setItem(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memStore[k]=v; } },
+  removeItem(k){ try{ localStorage.removeItem(k); }catch(e){ delete memStore[k]; } }
+};
+
+function openLeaf(child, path){
+  currentLeaf = child;
+  currentPath = path;
+  welcomeEl.style.display = 'none';
+  contentWrapEl.style.display = 'block';
+  breadcrumbEl.innerHTML = path.map((p,i)=> (i>0?' <span>›</span> ':'') + (i===path.length-1? '<span>'+p+'</span>' : p)).join('');
+  sectionTitleEl.textContent = child.title;
+
+  const saved = safeStorage.getItem(storageKey(child.id));
+  sectionContentEl.innerHTML = saved !== null ? saved : child.content();
+  sectionContentEl.contentEditable = editMode ? 'true' : 'false';
+  saveIndicator.classList.remove('show');
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+// ---- edit mode ----
+editToggle.onclick = ()=>{
+  editMode = !editMode;
+  editToggle.textContent = '✎ editar: ' + (editMode ? 'ON' : 'OFF');
+  editToggle.style.color = editMode ? 'var(--accent)' : '';
+  editToggle.style.borderColor = editMode ? 'var(--accent)' : '';
+  if(currentLeaf){
+    sectionContentEl.contentEditable = editMode ? 'true' : 'false';
+    if(editMode) sectionContentEl.focus();
+  }
+};
+
+let saveTimer = null;
+sectionContentEl.addEventListener('input', ()=>{
+  if(!currentLeaf) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    safeStorage.setItem(storageKey(currentLeaf.id), sectionContentEl.innerHTML);
+    saveIndicator.classList.add('show');
+    setTimeout(()=>saveIndicator.classList.remove('show'), 1500);
+  }, 500);
+});
+
+document.getElementById('resetBtn').onclick = ()=>{
+  if(!currentLeaf) return;
+  if(confirm('¿Restaurar el contenido original de este apartado? Se perderán tus ediciones guardadas aquí.')){
+    safeStorage.removeItem(storageKey(currentLeaf.id));
+    sectionContentEl.innerHTML = currentLeaf.content();
+    toast('Restaurado ✓');
+  }
+};
+
+// ---- exportar / importar copia de seguridad ----
+function collectAllLeafIds(node){
+  let ids = [];
+  (node.children||[]).forEach(c=>{
+    if(c.leaf) ids.push(c.id);
+    if(c.children) ids = ids.concat(collectAllLeafIds(c));
+  });
+  return ids;
+}
+const ALL_LEAF_IDS = Object.keys(TREE).reduce((ids, key)=> ids.concat(collectAllLeafIds(TREE[key])), []);
+
+document.getElementById('exportBtn').onclick = ()=>{
+  const data = {};
+  ALL_LEAF_IDS.forEach(id=>{
+    const v = safeStorage.getItem(storageKey(id));
+    if(v !== null) data[id] = v;
+  });
+  if(Object.keys(data).length === 0){
+    toast('No hay ediciones que exportar todavía');
+    return;
+  }
+  const payload = {app:'rotatorio-nefro', exportedAt: new Date().toISOString(), data};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rotatorio-nefro-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Copia de seguridad descargada ✓');
+};
+
+const importFileEl = document.getElementById('importFile');
+document.getElementById('importBtn').onclick = ()=> importFileEl.click();
+importFileEl.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const payload = JSON.parse(reader.result);
+      const data = payload.data || payload;
+      let count = 0;
+      Object.keys(data).forEach(id=>{
+        if(ALL_LEAF_IDS.includes(id)){
+          safeStorage.setItem(storageKey(id), data[id]);
+          count++;
+        }
+      });
+      if(count === 0){
+        toast('El archivo no contiene secciones reconocidas');
+        return;
+      }
+      if(currentLeaf){
+        const saved = safeStorage.getItem(storageKey(currentLeaf.id));
+        sectionContentEl.innerHTML = saved !== null ? saved : currentLeaf.content();
+      }
+      toast('Importadas ' + count + ' secciones ✓');
+    }catch(err){
+      alert('Archivo no válido: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  importFileEl.value = '';
+});
+
+/* =========================================================
+   TABLE INTERACTIONS
+   ========================================================= */
+function addRow(btn){
+  const wrap = btn.closest('.table-wrap');
+  const tbody = wrap.querySelector('tbody');
+  const cols = wrap.querySelectorAll('thead th').length;
+  const tr = document.createElement('tr');
+  for(let i=0;i<cols;i++){
+    const td = document.createElement('td');
+    td.contentEditable = 'true';
+    td.textContent = 'nueva celda';
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+  triggerSave();
+}
+function delRow(btn){
+  const wrap = btn.closest('.table-wrap');
+  const rows = wrap.querySelectorAll('tbody tr');
+  if(rows.length>0){ rows[rows.length-1].remove(); triggerSave(); }
+}
+function addCol(btn){
+  const wrap = btn.closest('.table-wrap');
+  const headRow = wrap.querySelector('thead tr');
+  const th = document.createElement('th');
+  th.contentEditable = 'true';
+  th.textContent = 'Nueva columna';
+  headRow.appendChild(th);
+  wrap.querySelectorAll('tbody tr').forEach(tr=>{
+    const td = document.createElement('td');
+    td.contentEditable = 'true';
+    td.textContent = '—';
+    tr.appendChild(td);
+  });
+  triggerSave();
+}
+function delCol(btn){
+  const wrap = btn.closest('.table-wrap');
+  const headCells = wrap.querySelectorAll('thead th');
+  if(headCells.length<=1) return;
+  const idx = headCells.length-1;
+  headCells[idx].remove();
+  wrap.querySelectorAll('tbody tr').forEach(tr=>{
+    const cells = tr.querySelectorAll('td');
+    if(cells[idx]) cells[idx].remove();
+  });
+  triggerSave();
+}
+function triggerSave(){
+  if(!currentLeaf) return;
+  safeStorage.setItem(storageKey(currentLeaf.id), sectionContentEl.innerHTML);
+  saveIndicator.classList.add('show');
+  setTimeout(()=>saveIndicator.classList.remove('show'), 1500);
+}
+
+// ---- diagramas interactivos ----
+function highlightPart(el){
+  const wrap = el.closest('.diagram-wrap');
+  if(!wrap) return;
+  wrap.querySelectorAll('.hit').forEach(h=>h.classList.remove('active-part'));
+  el.classList.add('active-part');
+  const info = wrap.querySelector('.diagram-info');
+  if(info) info.innerHTML = '<strong>' + el.dataset.title + ':</strong> ' + el.dataset.desc;
+}
+
+function faGoTo(el, step){
+  const wrap = el.closest('.diagram-wrap');
+  if(!wrap) return;
+  wrap.querySelectorAll('.fa-step').forEach(s=>{ s.hidden = (s.dataset.step !== step); });
+}
+</script>
+</body>
+</html>
