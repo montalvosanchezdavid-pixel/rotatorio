@@ -354,6 +354,7 @@ const TREE = {
         {id:'t18a', title:'a. Manejo de drogas inmunosupresoras', leaf:true, hem:true, content:()=>T18A},
         {id:'t18b', title:'b. Interacciones farmacológicas', leaf:true, hem:true, content:()=>T18B},
       ]},
+      {id:'t19', title:'19. Anemia renal: EPO y hierro', leaf:true, content:()=>T19},
     ]
   },
   cardiologia: {
@@ -1421,6 +1422,107 @@ const T18B = `
 <div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
 </div>
 <div class="callout warn"><span class="tag">HEMATO</span> Presta especial atención cuando un paciente recibe quimioterapia e inmunosupresores a la vez (p. ej. trasplante renal previo con neoplasia hematológica posterior) — revisa siempre la interacción con azoles antifúngicos, una de las combinaciones más frecuentes y peligrosas en la práctica real de planta.</div>
+`;
+
+const T19 = `
+<p class="comment">// anemia renal — eritropoyetina (EPO) y hierro</p>
+<h3>Fisiopatología</h3>
+<p>La causa principal es el <strong>déficit relativo de eritropoyetina</strong> (el riñón enfermo no la produce en cantidad suficiente para el grado de anemia), agravado casi siempre por <strong>ferropenia</strong> — absoluta (depósitos vacíos) o funcional (depósitos normales pero hierro "secuestrado" y no disponible por la inflamación crónica, vía hepcidina) — y por las pérdidas hemáticas repetidas en hemodiálisis (circuito extracorpóreo, analíticas frecuentes).</p>
+<div class="callout warn"><span class="tag">REGLA DE ORO</span> Nunca inicies EPO sin haber corregido/valorado antes el hierro. Dar EPO con depósitos de hierro vacíos no funciona (o funciona mal) y solo consigue "gastar" la poca reserva que queda.</div>
+
+<h3>1. ¿Cuándo pedir estudio de hierro y cuándo tratar?</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t19-1">
+<caption>Objetivos de hierro antes/durante tratamiento con EPO (KDIGO)</caption>
+<thead><tr><th>Parámetro</th><th>Objetivo</th><th>Interpretación</th></tr></thead>
+<tbody>
+<tr><td>Ferritina</td><td>&gt;100 ng/mL (ERC no en diálisis) / &gt;200 ng/mL (hemodiálisis)</td><td>Refleja depósitos — pero es reactante de fase aguda, puede estar falsamente elevada con inflamación/infección</td></tr>
+<tr><td>Índice de saturación de transferrina (IST)</td><td>&gt;20-30%</td><td>Refleja hierro disponible para la eritropoyesis "en tiempo real" — más útil que la ferritina sola</td></tr>
+<tr><td>Ambos por debajo de objetivo</td><td>—</td><td>Iniciar/aumentar hierro antes o junto con la EPO</td></tr>
+<tr><td>Ferritina alta + IST bajo</td><td>—</td><td>Sugiere ferropenia funcional (inflamación) — puede necesitar hierro IV pese a ferritina "normal-alta"</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+
+<h3>2. Hierro: oral vs. intravenoso, y qué tipo según la modalidad</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t19-2">
+<caption>Elección de hierro según situación clínica</caption>
+<thead><tr><th>Situación</th><th>Vía habitual</th><th>Por qué</th></tr></thead>
+<tbody>
+<tr><td>ERC no en diálisis (prediálisis)</td><td>Oral primero (sulfato/glucoheptonato ferroso, 1-3 meses de prueba); IV si no hay respuesta, intolerancia digestiva o ferropenia importante</td><td>Absorción intestinal todavía razonable; se prueba la vía más cómoda primero</td></tr>
+<tr><td>Diálisis peritoneal (DP)</td><td>Oral o IV periódico en consulta (no hay acceso vascular constante)</td><td>Sin acceso venoso "gratis" disponible en cada sesión, a diferencia de la HD</td></tr>
+<tr><td><strong>Hemodiálisis (HD)</strong></td><td><strong>IV, de elección</strong> (se administra directamente en las líneas del circuito de diálisis)</td><td>Absorción oral pobre (uremia, hepcidina elevada por inflamación crónica) + pérdidas hemáticas repetidas del propio circuito → el oral casi nunca es suficiente</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="table-wrap"><table class="itable" data-table-id="t19-3">
+<caption>Preparados de hierro IV más usados</caption>
+<thead><tr><th>Preparado</th><th>Dosis habitual</th><th>Comentario</th></tr></thead>
+<tbody>
+<tr><td>Hierro sacarosa</td><td>100 mg en cada sesión de HD (2-3 veces/semana) hasta completar la dosis total calculada</td><td>El más usado clásicamente en HD; buen perfil de seguridad, requiere dosis fraccionadas</td></tr>
+<tr><td>Carboximaltosa férrica</td><td>500-1000 mg en dosis única o pocas dosis</td><td>Permite reponer un déficit grande en menos administraciones; útil en prediálisis/DP</td></tr>
+<tr><td>Gluconato férrico sódico</td><td>125 mg por sesión de HD</td><td>Alternativa a la sacarosa, perfil similar</td></tr>
+<tr><td>Derisomaltosa/dextrano de bajo peso molecular</td><td>Dosis altas en administración única (hasta 1000-1500 mg)</td><td>Reposición rápida de depósitos, menor riesgo de reacción que el dextrano de alto peso molecular (en desuso)</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+
+<h3>3. ¿Cuándo iniciar EPO (agentes estimulantes de la eritropoyesis, AEE)?</h3>
+<ul>
+<li><strong>Hemoglobina &lt;10 g/dL</strong>, una vez descartadas y corregidas otras causas de anemia (déficit de hierro, B12/fólico, sangrado activo, hemólisis) y con depósitos de hierro adecuados.</li>
+<li>Individualizar en 9-10 g/dL según síntomas, velocidad de descenso, comorbilidad cardiovascular y preferencias del paciente (KDIGO no da un único umbral rígido).</li>
+<li><strong>No usar para normalizar la Hb:</strong> el objetivo terapéutico es <strong>10-11.5 g/dL</strong>, evitando superar ~13 g/dL — los ensayos (CHOIR, CREATE, TREAT) mostraron más eventos cardiovasculares e ictus al buscar Hb normal con dosis altas de AEE.</li>
+</ul>
+
+<h3>4. Tipos de EPO y cómo se ajusta la dosis</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t19-4">
+<caption>Agentes estimulantes de la eritropoyesis</caption>
+<thead><tr><th>Fármaco</th><th>Semivida / pauta</th><th>Dosis inicial orientativa</th><th>Vía preferente</th></tr></thead>
+<tbody>
+<tr><td>Epoetina alfa / beta</td><td>Corta — 2-3 veces/semana</td><td>50-100 UI/kg/semana repartidas en 2-3 dosis</td><td>SC en prediálisis/DP; IV habitual en HD (acceso ya disponible)</td></tr>
+<tr><td>Darbepoetina alfa</td><td>Larga — semanal o quincenal</td><td>0.45 mcg/kg/semana (o 0.75 mcg/kg cada 2 semanas)</td><td>SC o IV</td></tr>
+<tr><td>Metoxi-polietilenglicol-epoetina beta (CERA)</td><td>Muy larga — mensual</td><td>0.6 mcg/kg cada 2 semanas al inicio, luego mensual</td><td>SC o IV</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout"><span class="tag">VÍA</span> Fuera de la sesión de HD (prediálisis, DP), la vía <strong>subcutánea</strong> es de elección: consigue el mismo efecto con dosis más bajas que la IV (mejor biodisponibilidad sostenida). En HD, la IV es simplemente más cómoda porque el acceso vascular ya está puesto — no es superior farmacológicamente.</div>
+
+<h3>5. Ajuste de dosis: por peso al inicio, por Hb después</h3>
+<ol>
+<li><strong>Dosis de inicio:</strong> se calcula por <strong>peso corporal</strong> (ver tabla del punto 4 — UI/kg o mcg/kg).</li>
+<li><strong>Reevaluar Hb cada 2-4 semanas</strong> al inicio o tras cualquier cambio de dosis (la respuesta a la EPO tarda en verse, no se debe ajustar más a menudo).</li>
+<li><strong>Ajustar según la velocidad de cambio de la Hb</strong>, no solo el valor puntual:
+  <ul>
+    <li>Si la Hb <strong>sube &gt;1 g/dL en 2 semanas</strong> o se acerca al límite superior (11.5-12) → <strong>reducir la dosis ~25%</strong> (no suspender de golpe salvo Hb muy alta).</li>
+    <li>Si la Hb <strong>no sube o sigue cayendo</strong> tras 2-4 semanas a dosis adecuada y con hierro corregido → <strong>aumentar la dosis ~25%</strong>.</li>
+    <li>Evitar oscilaciones amplias ("montaña rusa" de Hb) — subidas rápidas se asocian a HTA, convulsiones y trombosis del acceso vascular.</li>
+  </ul>
+</li>
+<li>Una vez en objetivo, mantener la dosis mínima eficaz y reevaluar periódicamente (mensual en HD, algo más espaciado en prediálisis/DP).</li>
+</ol>
+
+<h3>6. ¿Por qué un paciente no responde a la EPO? (hiporrespuesta)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="t19-5">
+<caption>Causas de hiporrespuesta a los AEE</caption>
+<thead><tr><th>Causa</th><th>Comentario</th></tr></thead>
+<tbody>
+<tr><td>Ferropenia (la más frecuente)</td><td>Revisar y corregir siempre en primer lugar</td></tr>
+<tr><td>Inflamación / infección activa</td><td>La hepcidina bloquea la disponibilidad de hierro y la respuesta medular a la EPO</td></tr>
+<tr><td>Hiperparatiroidismo severo</td><td>Fibrosis medular por HPT2º mal controlado</td></tr>
+<tr><td>Pérdidas hemáticas ocultas</td><td>Sangrado digestivo, pérdidas repetidas del circuito de HD</td></tr>
+<tr><td>Déficit de vitamina B12/fólico</td><td>Descartar siempre junto al hierro</td></tr>
+<tr><td>Aplasia pura de células rojas (PRCA)</td><td>Rara — anticuerpos anti-EPO, sospechar si caída brusca de Hb con reticulocitos muy bajos pese a dosis altas</td></tr>
+<tr><td>Neoplasia activa</td><td>Ver aviso HEMATO más abajo</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+
+<div class="callout warn"><span class="tag">HEMATO</span> Los AEE llevan una advertencia específica en el paciente oncológico: pueden estimular el crecimiento tumoral y aumentan el riesgo de eventos tromboembólicos. En pacientes con neoplasia activa (especialmente si el tratamiento tiene intención curativa), se recomienda usar la dosis mínima necesaria para evitar la transfusión, no para normalizar la Hb, e individualizar siempre con el equipo de hematología/oncología — en muchos casos se prefiere directamente la transfusión a iniciar EPO.</div>
+<div class="callout warn"><span class="tag">CONTRAINDICACIONES</span> HTA no controlada (la EPO puede subir la TA), hipersensibilidad conocida, y precaución en antecedentes de eventos tromboembólicos o ictus reciente.</div>
 `;
 
 /* =========================================================
