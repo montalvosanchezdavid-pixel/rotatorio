@@ -175,6 +175,21 @@ body{
 }
 .diagram-wrap svg{max-width:100%;height:auto;}
 .diagram-wrap svg text{pointer-events:none;}
+
+/* heart 3D */
+.heart3d-canvas{
+  width:100%;height:420px;border-radius:6px;
+  background:radial-gradient(circle at 50% 40%, #14141a 0%, #0a0a0c 70%);
+  cursor:grab;touch-action:none;overflow:hidden;
+}
+.heart3d-canvas:active{cursor:grabbing;}
+.heart3d-canvas canvas{display:block;}
+.heart3d-legend{
+  display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:11px;color:var(--text-dim);text-align:left;
+}
+.heart3d-legend span{display:flex;align-items:center;gap:6px;}
+.heart3d-legend i{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0;}
+@media (max-width:640px){ .heart3d-canvas{height:320px;} }
 .diagram-wrap .hit{cursor:pointer;transition:opacity .15s, filter .15s;}
 .diagram-wrap .hit:hover{opacity:0.28 !important;}
 .diagram-wrap .hit.active-part{opacity:0.38 !important;filter:drop-shadow(0 0 4px var(--accent));}
@@ -384,6 +399,7 @@ const TREE = {
       {id:'c9', title:'9. Biomarcadores cardiacos', leaf:true, content:()=>C9},
       {id:'c10', title:'10. Hipertensión arterial', leaf:true, content:()=>C10},
       {id:'c11', title:'11. Soplos, valvulopatías y endocarditis', leaf:true, content:()=>C11},
+      {id:'c12', title:'12. Anatomía coronaria 3D (interactivo)', leaf:true, content:()=>C12},
     ]
   }
 };
@@ -2103,6 +2119,36 @@ const C11 = `
 <div class="callout warn"><span class="tag">HEMATO</span> En neutropenia febril con catéter central, la endocarditis relacionada con catéter es un diagnóstico diferencial a mantener activo si persiste la fiebre/bacteriemia pese a antibioterapia adecuada y retirada del catéter — no asumir siempre que es \"solo\" bacteriemia relacionada con catéter sin complicaciones.</div>
 `;
 
+const C12 = `
+<p class="comment">// anatomía coronaria — modelo 3D interactivo</p>
+<div class="diagram-wrap heart3d-wrap">
+<div class="diagram-caption">// corazón esquemático — arrastra para rotar, scroll para zoom, click en una arteria</div>
+<div id="heart3dCanvas" class="heart3d-canvas"></div>
+<div class="heart3d-legend">
+<span><i style="background:#ffd166"></i> Tronco común izq. (TCI)</span>
+<span><i style="background:#00ff9c"></i> Descendente anterior (DA)</span>
+<span><i style="background:#7fffb0"></i> Diagonal (D1)</span>
+<span><i style="background:#ff6b6b"></i> Circunfleja (Cx)</span>
+<span><i style="background:#ff9e9e"></i> Marginal obtusa (OM1)</span>
+<span><i style="background:#00c8ff"></i> Coronaria derecha (CD)</span>
+</div>
+<div class="diagram-info" id="heart3dInfo">Cargando motor 3D… (requiere conexión a internet la primera vez que abres este apartado)</div>
+</div>
+<h3>Territorios de irrigación (referencia rápida)</h3>
+<div class="table-wrap"><table class="itable" data-table-id="c12-1">
+<caption>Arteria → territorio miocárdico → derivaciones ECG típicas</caption>
+<thead><tr><th>Arteria</th><th>Territorio</th><th>Derivaciones ECG</th></tr></thead>
+<tbody>
+<tr><td>Descendente anterior (DA / LAD)</td><td>Pared anterior y septo</td><td>V1-V4</td></tr>
+<tr><td>Circunfleja (Cx)</td><td>Pared lateral</td><td>I, aVL, V5-V6</td></tr>
+<tr><td>Coronaria derecha (CD / RCA)</td><td>Pared inferior (y ventrículo derecho en muchos pacientes)</td><td>II, III, aVF</td></tr>
+</tbody>
+</table>
+<div class="table-controls"><button onclick="addRow(this)">+ fila</button><button onclick="addCol(this)">+ columna</button><button onclick="delRow(this)">− fila</button><button onclick="delCol(this)">− columna</button></div>
+</div>
+<div class="callout"><span class="tag">NOTA</span> Este modelo es esquemático (no una reconstrucción anatómica exacta) — pensado para fijar el trayecto relativo de cada arteria y su territorio, útil para interpretar dónde se localiza un IAM según la derivación afectada (repasa <span class="inline-code">Cardiología → 1e. Patrones patológicos clave</span>).</div>
+`;
+
 /* =========================================================
    RENDER
    ========================================================= */
@@ -2215,6 +2261,7 @@ const safeStorage = {
 };
 
 function openLeaf(child, path){
+  disposeHeart3D();
   currentLeaf = child;
   currentPath = path;
   welcomeEl.style.display = 'none';
@@ -2227,6 +2274,10 @@ function openLeaf(child, path){
   sectionContentEl.contentEditable = editMode ? 'true' : 'false';
   saveIndicator.classList.remove('show');
   window.scrollTo({top:0, behavior:'instant'});
+
+  if(child.id === 'c12'){
+    setTimeout(()=> ensureThreeLoaded(initHeart3D), 0);
+  }
 }
 
 // ---- edit mode ----
@@ -2399,6 +2450,170 @@ function faGoTo(el, step){
   const wrap = el.closest('.diagram-wrap');
   if(!wrap) return;
   wrap.querySelectorAll('.fa-step').forEach(s=>{ s.hidden = (s.dataset.step !== step); });
+}
+
+// ---- corazón 3D (Three.js, carga perezosa desde CDN solo si se abre este apartado) ----
+let heart3D = null;
+
+function disposeHeart3D(){
+  if(!heart3D) return;
+  if(heart3D.raf) cancelAnimationFrame(heart3D.raf);
+  if(heart3D.resizeHandler) window.removeEventListener('resize', heart3D.resizeHandler);
+  if(heart3D.canvasEl && heart3D.clickHandler) heart3D.canvasEl.removeEventListener('click', heart3D.clickHandler);
+  if(heart3D.renderer){
+    heart3D.renderer.dispose();
+    const dom = heart3D.renderer.domElement;
+    if(dom && dom.parentNode) dom.parentNode.removeChild(dom);
+  }
+  heart3D = null;
+}
+
+function ensureThreeLoaded(cb){
+  if(window.THREE && window.THREE.OrbitControls){ cb(); return; }
+  let core = document.getElementById('threejs-core-script');
+  if(core){ core.addEventListener('load', ()=> ensureThreeLoaded(cb)); return; }
+  core = document.createElement('script');
+  core.id = 'threejs-core-script';
+  core.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js';
+  core.onload = ()=>{
+    const controls = document.createElement('script');
+    controls.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+    controls.onload = cb;
+    controls.onerror = heart3DShowError;
+    document.head.appendChild(controls);
+  };
+  core.onerror = heart3DShowError;
+  document.head.appendChild(core);
+}
+
+function heart3DShowError(){
+  const info = document.getElementById('heart3dInfo');
+  if(info) info.innerHTML = 'No se ha podido cargar el motor 3D (Three.js desde CDN) — comprueba tu conexión a internet. El resto de la web funciona sin conexión, pero este diagrama concreto necesita esa librería externa la primera vez.';
+}
+
+const HEART3D_PARTS = [
+  {key:'lm', name:'Tronco común izquierdo (TCI)', color:0xffd166, radius:0.05,
+   desc:'Segmento inicial corto que nace de la aorta y se bifurca en descendente anterior y circunfleja. Su obstrucción ("enfermedad de tronco") es de altísimo riesgo — indicación típica de revascularización urgente.',
+   points:[[0.1,0.95,0.5],[0.0,0.6,0.62]]},
+  {key:'lad', name:'Descendente anterior (DA / LAD)', color:0x00ff9c, radius:0.038,
+   desc:'Recorre el surco interventricular anterior hasta el ápex. Irriga la cara anterior y los dos tercios anteriores del septo. Su oclusión proximal ("widow maker") es de las más graves — ST elevado en V1-V4.',
+   points:[[0.0,0.6,0.62],[0.05,0.1,0.55],[0.0,-0.5,0.45],[-0.05,-1.0,0.4],[0.0,-1.45,0.35]]},
+  {key:'d1', name:'Rama diagonal (D1)', color:0x7fffb0, radius:0.028,
+   desc:'Rama de la descendente anterior que irriga la pared anterolateral. Puede dar cambios asociados en I, aVL además de en precordiales.',
+   points:[[0.0,0.15,0.55],[0.45,-0.15,0.5],[0.7,-0.4,0.45]]},
+  {key:'cx', name:'Circunfleja (Cx)', color:0xff6b6b, radius:0.038,
+   desc:'Nace del tronco común izquierdo y recorre el surco auriculoventricular izquierdo hacia la cara lateral/posterior. Irriga la pared lateral — cambios típicos en I, aVL, V5-V6.',
+   points:[[0.0,0.6,0.62],[-0.5,0.5,0.3],[-0.8,0.2,-0.1],[-0.7,-0.2,-0.4],[-0.4,-0.6,-0.5]]},
+  {key:'om1', name:'Marginal obtusa (OM1)', color:0xff9e9e, radius:0.028,
+   desc:'Rama de la circunfleja que irriga la pared lateral del ventrículo izquierdo.',
+   points:[[-0.75,0.1,-0.05],[-1.05,-0.1,-0.15],[-1.15,-0.4,-0.2]]},
+  {key:'rca', name:'Coronaria derecha (CD / RCA)', color:0x00c8ff, radius:0.038,
+   desc:'Recorre el surco auriculoventricular derecho hasta la cara inferior, dando la descendente posterior en la mayoría de personas ("dominancia derecha"). Irriga el ventrículo derecho y la cara inferior — cambios en II, III, aVF. También irriga el nodo sinusal y el nodo AV en la mayoría de casos (bradiarritmias frecuentes en el IAM inferior).',
+   points:[[0.3,0.9,0.3],[0.7,0.5,0.1],[0.75,0.0,-0.2],[0.5,-0.5,-0.4],[0.1,-0.9,-0.45]]},
+];
+
+function initHeart3D(){
+  disposeHeart3D();
+  const container = document.getElementById('heart3dCanvas');
+  if(!container || !window.THREE){ heart3DShowError(); return; }
+  const infoEl = document.getElementById('heart3dInfo');
+  if(infoEl) infoEl.innerHTML = 'Arrastra para rotar, scroll para hacer zoom. Haz click en una arteria para ver su nombre y territorio.';
+
+  const width = container.clientWidth || 600;
+  const height = container.clientHeight || 420;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, width/height, 0.1, 100);
+  camera.position.set(0, 0.2, 4.2);
+
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  container.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(2,3,4);
+  scene.add(dirLight);
+  const rimLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+  rimLight.position.set(-3,-2,-2);
+  scene.add(rimLight);
+
+  const heartShape = new THREE.Shape();
+  heartShape.moveTo(0, 0.5);
+  heartShape.bezierCurveTo(0, 0.7, -0.55, 1.05, -0.9, 0.65);
+  heartShape.bezierCurveTo(-1.25, 0.25, -0.9, -0.35, -0.45, -0.75);
+  heartShape.bezierCurveTo(-0.25, -0.95, -0.1, -1.15, 0, -1.5);
+  heartShape.bezierCurveTo(0.1, -1.15, 0.25, -0.95, 0.45, -0.75);
+  heartShape.bezierCurveTo(0.9, -0.35, 1.25, 0.25, 0.9, 0.65);
+  heartShape.bezierCurveTo(0.55, 1.05, 0, 0.7, 0, 0.5);
+
+  const heartGeo = new THREE.ExtrudeGeometry(heartShape, { depth:0.75, bevelEnabled:true, bevelThickness:0.15, bevelSize:0.1, bevelSegments:6, curveSegments:24 });
+  heartGeo.center();
+  heartGeo.translate(0,0,-0.05);
+
+  const heartMesh = new THREE.Mesh(heartGeo, new THREE.MeshPhongMaterial({ color:0x2a1420, transparent:true, opacity:0.55, shininess:30, specular:0x553344 }));
+  scene.add(heartMesh);
+
+  const edgeLines = new THREE.LineSegments(new THREE.EdgesGeometry(heartGeo, 25), new THREE.LineBasicMaterial({ color:0x664455, transparent:true, opacity:0.5 }));
+  heartMesh.add(edgeLines);
+
+  const arteryMeshes = [];
+  HEART3D_PARTS.forEach(part=>{
+    const pts = part.points.map(p=> new THREE.Vector3(p[0], p[1], p[2]));
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const tubeGeo = new THREE.TubeGeometry(curve, 40, part.radius, 10, false);
+    const tubeMat = new THREE.MeshPhongMaterial({ color:part.color, emissive:part.color, emissiveIntensity:0.35, shininess:60 });
+    const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+    tubeMesh.userData = part;
+    scene.add(tubeMesh);
+    arteryMeshes.push(tubeMesh);
+  });
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 2.2;
+  controls.maxDistance = 7;
+  controls.target.set(0,-0.2,0);
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let activeMesh = null;
+
+  function onClick(ev){
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(arteryMeshes);
+    if(hits.length){
+      if(activeMesh) activeMesh.material.emissiveIntensity = 0.35;
+      activeMesh = hits[0].object;
+      activeMesh.material.emissiveIntensity = 1.1;
+      const p = activeMesh.userData;
+      if(infoEl) infoEl.innerHTML = '<strong>' + p.name + ':</strong> ' + p.desc;
+    }
+  }
+  renderer.domElement.addEventListener('click', onClick);
+
+  function onResize(){
+    const w = container.clientWidth || width;
+    const h = container.clientHeight || height;
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w,h);
+  }
+  window.addEventListener('resize', onResize);
+
+  const state = { renderer, scene, camera, controls, resizeHandler:onResize, canvasEl:renderer.domElement, clickHandler:onClick, raf:null };
+  heart3D = state;
+  function animate(){
+    state.raf = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
 }
 </script>
 </body>
