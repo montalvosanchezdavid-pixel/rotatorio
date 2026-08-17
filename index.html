@@ -397,6 +397,7 @@ const TREE = {
         {id:'t18b', title:'b. Interacciones farmacológicas', leaf:true, hem:true, content:()=>T18B},
       ]},
       {id:'t19', title:'19. Anemia renal: EPO y hierro', leaf:true, content:()=>T19},
+      {id:'t20', title:'20. Trastornos del pH (algoritmos interactivos)', leaf:true, content:()=>T20},
     ]
   },
   cardiologia: {
@@ -1566,6 +1567,190 @@ const T19 = `
 
 <div class="callout warn"><span class="tag">HEMATO</span> Los AEE llevan una advertencia específica en el paciente oncológico: pueden estimular el crecimiento tumoral y aumentan el riesgo de eventos tromboembólicos. En pacientes con neoplasia activa (especialmente si el tratamiento tiene intención curativa), se recomienda usar la dosis mínima necesaria para evitar la transfusión, no para normalizar la Hb, e individualizar siempre con el equipo de hematología/oncología — en muchos casos se prefiere directamente la transfusión a iniciar EPO.</div>
 <div class="callout warn"><span class="tag">CONTRAINDICACIONES</span> HTA no controlada (la EPO puede subir la TA), hipersensibilidad conocida, y precaución en antecedentes de eventos tromboembólicos o ictus reciente.</div>
+`;
+
+const T20 = `
+<p class="comment">// trastornos del pH — algoritmos interactivos</p>
+<div class="callout"><span class="tag">CÓMO USAR</span> Cuatro herramientas guiadas: ve pulsando las respuestas según los datos de tu paciente hasta llegar al diagnóstico o tratamiento. Complementan (no sustituyen) el contenido ya visto en <span class="inline-code">3. Gasometría venosa</span>.</div>
+
+<h3>1. Interpretación inicial del pH</h3>
+<div class="diagram-wrap">
+<div class="diagram-caption">// paso 1 — ¿acidemia, normal o alcalemia?</div>
+<div class="fa-step" data-step="start">
+  <p><strong>¿Cuál es el pH?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'acidemia')">pH &lt; 7.35 (acidemia)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'normal')">pH 7.35-7.45 (normal)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'alcalemia')">pH &gt; 7.45 (alcalemia)</button>
+</div>
+<div class="fa-step" data-step="acidemia" hidden>
+  <p><strong>ACIDOSIS.</strong> ¿Qué predomina en la gasometría?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'ac-met')">↓ HCO3⁻</button>
+  <button class="flow-btn" onclick="faGoTo(this,'ac-resp')">↑ pCO2</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="ac-met" hidden><div class="callout">Acidosis metabólica → sigue con la herramienta 2 para filiar la causa.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="ac-resp" hidden><div class="callout">Acidosis respiratoria (hipoventilación) — buscar causa pulmonar/neuromuscular/depresión del centro respiratorio.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="normal" hidden>
+  <div class="callout">pH normal — puede ser <strong>normal real</strong> o un <strong>trastorno mixto</strong>. Sospecha mixto si: anión gap aumentado con HCO3⁻/pCO2 normales, o si pCO2 y HCO3⁻ cambian en la misma dirección (ambos ↓ o ambos ↑) — repasa <span class="inline-code">3c. Trastornos mixtos</span>.</div>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="alcalemia" hidden>
+  <p><strong>ALCALOSIS.</strong> ¿Qué predomina en la gasometría?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'al-met')">↑ HCO3⁻</button>
+  <button class="flow-btn" onclick="faGoTo(this,'al-resp')">↓ pCO2</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="al-met" hidden><div class="callout">Alcalosis metabólica → sigue con la herramienta 3 para filiar la causa.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="al-resp" hidden><div class="callout">Alcalosis respiratoria (hiperventilación) — dolor, ansiedad, hipoxemia, sepsis precoz, embarazo, salicilatos.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+</div>
+
+<h3>2. Diagnóstico de la acidosis metabólica (por anión gap)</h3>
+<div class="diagram-wrap">
+<div class="diagram-caption">// AG = Na⁺ − (Cl⁻ + HCO3⁻) · valor normal ≈ 8-12 mEq/L</div>
+<div class="fa-step" data-step="start">
+  <p><strong>¿Cuánto es el anión gap?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'ag-alto')">Aumentado (&gt;12 mEq/L)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'ag-normal')">Normal (8-12 mEq/L)</button>
+</div>
+<div class="fa-step" data-step="ag-alto" hidden>
+  <p><strong>AG aumentado.</strong> ¿Cetonas?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'cet-alta')">Muy elevadas</button>
+  <button class="flow-btn" onclick="faGoTo(this,'cet-baja')">Ausentes o algo elevadas</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="cet-alta" hidden>
+  <p><strong>Cetonas muy elevadas.</strong> ¿Glucemia?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'r-dka')">Elevada</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-ndka')">No elevada</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="r-dka" hidden><div class="callout warn"><span class="tag">DX</span> Cetoacidosis diabética.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-ndka" hidden><div class="callout warn"><span class="tag">DX</span> Cetoacidosis no diabética (alcohólica / ayuno prolongado).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="cet-baja" hidden>
+  <p><strong>Cetonas ausentes o mínimas.</strong> ¿Lactato sérico?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'lac-alto')">Elevado</button>
+  <button class="flow-btn" onclick="faGoTo(this,'lac-normal')">Normal</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="lac-alto" hidden>
+  <div class="callout warn"><span class="tag">DX</span> Acidosis láctica.
+  <ul style="margin-top:6px;">
+  <li><strong>Tipo A</strong> (hipoxia tisular): hipoperfusión, sepsis, shock</li>
+  <li><strong>Tipo B</strong> (sin hipoxia franca): metformina, alcoholes, neoplasias, hepatopatía, humo de incendio (cianuro)</li>
+  </ul></div>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="lac-normal" hidden>
+  <p><strong>Sin cetosis ni lactato elevado</strong> — buscar otras causas:</p>
+  <button class="flow-btn" onclick="faGoTo(this,'r-osmolal')">Gap osmolal &gt; 20 mOsm/kg</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-salicilato')">Salicilato &gt; 40 mg/dL</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-oxoprolina')">5-oxoprolina urinaria +</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-otras')">Ninguna de las anteriores</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="r-osmolal" hidden><div class="callout warn"><span class="tag">DX</span> Intoxicación por alcoholes: etanol, metanol, etilenglicol o propilenglicol — determinar el tóxico específico.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-salicilato" hidden><div class="callout warn"><span class="tag">DX</span> Intoxicación por salicilatos.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-oxoprolina" hidden><div class="callout warn"><span class="tag">DX</span> Acidosis por piroglutámico (intoxicación crónica por paracetamol/acetaminofeno).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-otras" hidden><div class="callout warn"><span class="tag">DX</span> Acidosis láctica tipo D, insuficiencia renal grave, u otras causas raras.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="ag-normal" hidden>
+  <p><strong>AG normal (hiperclorémica).</strong> Carga neta urinaria = Cl⁻ orina vs (Na⁺+K⁺) orina:</p>
+  <button class="flow-btn" onclick="faGoTo(this,'carga-pos')">Positiva: Cl⁻ &gt; (Na⁺+K⁺)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'carga-neg')">Negativa: Cl⁻ &lt; (Na⁺+K⁺)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="carga-pos" hidden><div class="callout warn"><span class="tag">DX</span> Pérdidas extrarrenales de HCO3⁻: diarrea, íleo, fístulas intestinales, laxantes, colestiramina, cloruro cálcico, derivaciones uretero-intestinales.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="carga-neg" hidden><div class="callout warn"><span class="tag">DX</span> Pérdidas renales de HCO3⁻: acidosis tubular distal o proximal, hipoaldosteronismo, insuficiencia renal (el AG puede ser normal o elevado en este caso).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+</div>
+
+<h3>3. Diagnóstico de la alcalosis metabólica</h3>
+<div class="diagram-wrap">
+<div class="diagram-caption">// eje función renal → cloro urinario → HTA → renina/aldosterona</div>
+<div class="fa-step" data-step="start">
+  <p><strong>¿Función renal?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'sin-ir')">Sin insuficiencia renal (FG &gt; 25 mL/min)</button>
+  <button class="flow-btn" onclick="faGoTo(this,'con-ir')">Con insuficiencia renal (FG &lt; 25 mL/min)</button>
+</div>
+<div class="fa-step" data-step="con-ir" hidden><div class="callout warn"><span class="tag">DX</span> Administración de bicarbonato, síndrome de leche y alcalinos, o vómitos en el contexto de insuficiencia renal (el riñón no puede excretar el exceso).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="sin-ir" hidden>
+  <p><strong>Sin insuficiencia renal.</strong> ¿Cloro urinario?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'cl-bajo')">Cl⁻ &lt; 10 mEq/L</button>
+  <button class="flow-btn" onclick="faGoTo(this,'cl-alto')">Cl⁻ &gt; 15-20 mEq/L</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="cl-bajo" hidden>
+  <div class="callout">Cloro-sensible (responde a SSF): vómitos, aspiración nasogástrica, uso remoto de diuréticos.</div>
+  <p><strong>¿Hipertensión arterial asociada?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'sin-hta')">Sin HTA</button>
+  <button class="flow-btn" onclick="faGoTo(this,'con-hta')">Con HTA</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="cl-alto" hidden>
+  <div class="callout">Cloro-resistente: uso activo de diuréticos u otras causas — continúa por HTA.</div>
+  <p><strong>¿Hipertensión arterial asociada?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'sin-hta')">Sin HTA</button>
+  <button class="flow-btn" onclick="faGoTo(this,'con-hta')">Con HTA</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="sin-hta" hidden>
+  <p><strong>Sin HTA.</strong> ¿Cloro urinario persistentemente bajo?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'r-bartter')">Sí</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-diureticos')">No</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="r-bartter" hidden><div class="callout warn"><span class="tag">DX</span> Síndrome de Bartter, síndrome de Gitelman, o depleción de magnesio.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-diureticos" hidden><div class="callout warn"><span class="tag">DX</span> Uso de diuréticos (activo).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="con-hta" hidden>
+  <p><strong>Con HTA.</strong> ¿Renina y aldosterona?</p>
+  <button class="flow-btn" onclick="faGoTo(this,'r-renovasc')">↑ renina, ↑ aldosterona</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-hiperaldo')">↓ renina, ↑ aldosterona</button>
+  <button class="flow-btn" onclick="faGoTo(this,'r-cushing')">↓ renina, ↓ aldosterona</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="r-renovasc" hidden><div class="callout warn"><span class="tag">DX</span> Estenosis de arteria renal, HTA maligna, o tumor productor de renina.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-hiperaldo" hidden><div class="callout warn"><span class="tag">DX</span> Hiperaldosteronismo primario.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="r-cushing" hidden><div class="callout warn"><span class="tag">DX</span> Síndrome de Cushing, síndrome de Liddle, o exceso de corticoides exógenos.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+</div>
+
+<h3>4. Tratamiento de la acidosis metabólica</h3>
+<div class="diagram-wrap">
+<div class="diagram-caption">// evaluar gravedad → tratar la causa → bicarbonato solo si está indicado</div>
+<div class="callout warn"><span class="tag">ANTICÍPATE</span> Amenazas por la propia acidosis: arritmia grave, insuficiencia respiratoria, inestabilidad hemodinámica, toxinas (metanol/etilenglicol), déficit de vitamina B. Amenazas por el tratamiento: hipopotasemia, edema pulmonar, déficit de tiamina, edema cerebral en diabéticos.</div>
+<div class="fa-step" data-step="start">
+  <p><strong>¿Anión gap?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'ag-alto')">Aumentado — tratar la causa, bicarbonato solo si acidosis extrema</button>
+  <button class="flow-btn" onclick="faGoTo(this,'ag-normal')">Normal — tratar la causa si es tratable, bicarbonato si pH &lt; 7.20</button>
+</div>
+<div class="fa-step" data-step="ag-alto" hidden>
+  <p><strong>¿Causa?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'t-dka')">Cetoacidosis diabética</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-lacA')">Acidosis láctica tipo A</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-lacB')">Acidosis láctica tipo B</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-alcohol')">Intoxicación por alcoholes</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-alcoholica')">Cetoacidosis alcohólica</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="t-dka" hidden><div class="callout">Insulina + corregir hipovolemia y déficit de agua (salino, seguido de hiposalino o glucosado) + bicarbonato solo si acidosis extrema.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-lacA" hidden><div class="callout">Aumentar el aporte tisular de oxígeno (tratar shock/hipoperfusión/sepsis de base).</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-lacB" hidden><div class="callout">Tratamiento de soporte. Si es por metformina: suspender el fármaco; bicarbonato y hemodiálisis en acidosis extremas.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-alcohol" hidden><div class="callout">Lavado gástrico + etanol o fomepizol (antídoto) + hemodiálisis.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-alcoholica" hidden><div class="callout">Glucosa solo si hipoglucemia + corregir hipovolemia + tiamina (antes que la glucosa, para evitar Wernicke) + vigilar y tratar hipopotasemia, hipomagnesemia e hipofosfatemia, que suelen aparecer.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="ag-normal" hidden>
+  <p><strong>¿Causa?</strong></p>
+  <button class="flow-btn" onclick="faGoTo(this,'t-gi')">Pérdidas gastrointestinales</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-atprox')">Acidosis tubular proximal</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-atdist')">Acidosis tubular distal</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-ir')">Insuficiencia renal</button>
+  <button class="flow-btn" onclick="faGoTo(this,'t-hipoaldo')">Hipoaldosteronismo</button>
+  <button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button>
+</div>
+<div class="fa-step" data-step="t-gi" hidden><div class="callout">Corregir la causa + bicarbonato sódico.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-atprox" hidden><div class="callout">Si es secundaria, corregir la causa + bicarbonato sódico.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-atdist" hidden><div class="callout">Bicarbonato sódico.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-ir" hidden><div class="callout">Quelantes de fósforo + bicarbonato sódico + diálisis si precisa.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+<div class="fa-step" data-step="t-hipoaldo" hidden><div class="callout">Mineralocorticoides.</div><button class="flow-btn" onclick="faGoTo(this,'start')">↺ reiniciar</button></div>
+</div>
+
+<div class="callout"><span class="tag">NOTA</span> Reconstruido a partir de algoritmos clásicos de trastornos ácido-base (no es una reproducción literal de ninguna fuente concreta) — la lógica clínica que refleja es conocimiento médico estándar. Úsalo como apoyo mental, no como sustituto del juicio clínico ni de los protocolos de tu centro.</div>
 `;
 
 /* =========================================================
