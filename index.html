@@ -46,14 +46,41 @@ body{
 }
 .topbar .logo{color:var(--accent);font-weight:700;letter-spacing:1px;flex-shrink:0;}
 .topbar .logo span{color:var(--text-dim);}
-.tabs{display:flex;gap:4px;flex:1 1 140px;min-width:140px;overflow-x:auto;}
-.tab-btn{
-  background:transparent;border:1px solid transparent;color:var(--text-dim);
-  padding:6px 14px;font-family:var(--mono);font-size:13px;cursor:pointer;
-  border-radius:4px 4px 0 0;white-space:nowrap;transition:.15s;flex-shrink:0;
+.tabs{
+  display:flex;align-items:flex-end;align-self:flex-end;gap:0;
+  flex:1 1 140px;min-width:140px;overflow-x:auto;overflow-y:visible;
+  padding-top:20px;
 }
-.tab-btn:hover{color:var(--text);background:var(--bg-elev);}
-.tab-btn.active{color:var(--accent);border-color:var(--border);border-bottom-color:transparent;background:var(--bg-panel);}
+.tab-btn{
+  position:relative;
+  background:linear-gradient(180deg, var(--bg-elev) 0%, var(--bg-panel) 100%);
+  border:1px solid var(--border);border-bottom:none;
+  border-radius:9px 9px 0 0;
+  color:var(--text-dim);
+  padding:7px 18px;font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.3px;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;
+  margin-left:-11px;
+  transform:translateY(calc(var(--i,0) * 7px));
+  z-index:calc(10 - var(--i,0));
+  transition:transform .22s cubic-bezier(.2,.8,.3,1), color .2s, background .2s, box-shadow .2s, border-color .2s;
+}
+.tab-btn:first-child{margin-left:0;}
+.tab-btn:hover{
+  color:var(--accent);
+  background:linear-gradient(180deg, #102420 0%, var(--bg-panel) 100%);
+  border-color:var(--accent);
+  transform:translateY(-8px) scale(1.08);
+  z-index:30;
+  box-shadow:0 -6px 18px rgba(0,255,156,0.16);
+}
+.tab-btn.active{
+  color:var(--accent);
+  background:var(--bg-panel);
+  border-color:var(--border);
+  border-bottom-color:transparent;
+  z-index:20;
+}
+.tab-btn.active:hover{ z-index:30; }
 .top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
 .icon-btn{
   background:var(--bg-elev);border:1px solid var(--border);color:var(--text-dim);
@@ -2178,6 +2205,7 @@ function toast(msg){
 TABS.forEach((t,i)=>{
   const b = document.createElement('button');
   b.className = 'tab-btn' + (i===0?' active':'');
+  b.style.setProperty('--i', i);
   b.textContent = t.label;
   b.onclick = ()=>{
     document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
