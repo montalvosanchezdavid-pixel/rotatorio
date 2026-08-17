@@ -50,7 +50,6 @@ function toast(msg){
 TABS.forEach((t,i)=>{
   const b = document.createElement('button');
   b.className = 'tab-btn' + (i===0?' active':'');
-  b.style.setProperty('--i', i);
   b.textContent = t.label;
   b.onclick = ()=>{
     document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
