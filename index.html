@@ -13,9 +13,10 @@
   <div class="tabs" id="tabs"></div>
   <div class="top-actions">
     <button class="icon-btn" id="editToggle" title="Activar/desactivar edición">✎ editar: OFF</button>
-    <button class="icon-btn" id="exportBtn" title="Descargar copia de seguridad de todas tus ediciones">💾 exportar</button>
-    <button class="icon-btn" id="importBtn" title="Restaurar ediciones desde una copia de seguridad">📂 importar</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none;">
+    <div class="fav-dropdown" id="favDropdown">
+      <button class="icon-btn" id="favBtn" title="Ver tus favoritos">★ favoritos<span id="favCount" class="fav-count"></span></button>
+      <div class="fav-menu" id="favMenu" hidden></div>
+    </div>
     <button class="icon-btn cloud" title="Próximamente: sincronización en la nube">☁ cloud (pronto)</button>
   </div>
 </div>
@@ -38,6 +39,7 @@
         <h2 id="sectionTitle"></h2>
         <div class="section-tools">
           <span class="save-indicator" id="saveIndicator">✓ guardado</span>
+          <button id="favToggleBtn" title="Marcar/desmarcar este apartado como favorito">☆ favorito</button>
           <button id="resetBtn">↺ restaurar original</button>
         </div>
       </div>
@@ -51,6 +53,11 @@
 
 <script src="content-nefrologia.js"></script>
 <script src="content-cardiologia.js"></script>
+<script src="content-neumologia.js"></script>
+<script src="content-infecciosas.js"></script>
+<script src="content-medicina-interna.js"></script>
+<script src="content-coagulacion.js"></script>
+<script src="content-banco-sangre.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

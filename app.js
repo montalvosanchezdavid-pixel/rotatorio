@@ -4,9 +4,22 @@
 const TABS = [
   {id:'nefrologia', label:'NEFROLOGÍA'},
   {id:'cardiologia', label:'CARDIOLOGÍA'},
+  {id:'neumologia', label:'NEUMOLOGÍA'},
+  {id:'infecciosas', label:'INFECCIOSAS'},
+  {id:'interna', label:'MEDICINA INTERNA'},
+  {id:'coagulacion', label:'COAGULACIÓN'},
+  {id:'bancosangre', label:'BANCO DE SANGRE'},
 ];
 
-const TREE = { nefrologia: NEFRO_TREE, cardiologia: CARDIO_TREE };
+const TREE = {
+  nefrologia: NEFRO_TREE,
+  cardiologia: CARDIO_TREE,
+  neumologia: NEUMO_TREE,
+  infecciosas: INFECCIOSAS_TREE,
+  interna: INTERNA_TREE,
+  coagulacion: COAG_TREE,
+  bancosangre: BANCO_TREE,
+};
 
 /* =========================================================
    RENDER
@@ -75,6 +88,12 @@ function buildTree(node, depth, path){
       hemTag.textContent = 'HEM';
       row.appendChild(hemTag);
     }
+    if(child.leaf && typeof isFavorite === 'function' && isFavorite(child.id)){
+      const favTag = document.createElement('span');
+      favTag.className = 'node-fav-tag';
+      favTag.textContent = '★';
+      row.appendChild(favTag);
+    }
     li.appendChild(row);
 
     if(child.children){
@@ -134,11 +153,117 @@ function openLeaf(child, path){
   sectionContentEl.contentEditable = editMode ? 'true' : 'false';
   saveIndicator.classList.remove('show');
   window.scrollTo({top:0, behavior:'instant'});
+  updateFavToggleUI();
 
   if(child.id === 'c12'){
     setTimeout(()=> ensureThreeLoaded(initHeart3D), 0);
   }
 }
+
+// ---- favoritos ----
+const FAV_KEY = 'rotatorio_favorites';
+function getFavorites(){
+  try{ return JSON.parse(safeStorage.getItem(FAV_KEY) || '[]'); }catch(e){ return []; }
+}
+function setFavoritesList(arr){ safeStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+function isFavorite(id){ return getFavorites().includes(id); }
+function toggleFavorite(id){
+  let favs = getFavorites();
+  favs = favs.includes(id) ? favs.filter(x=>x!==id) : favs.concat([id]);
+  setFavoritesList(favs);
+  updateFavToggleUI();
+  renderFavMenu();
+}
+
+function searchNodeById(node, id, pathSoFar){
+  for(const c of node.children||[]){
+    const newPath = pathSoFar.concat(c.title);
+    if(c.id === id) return {node:c, path:newPath};
+    if(c.children){
+      const f = searchNodeById(c, id, newPath);
+      if(f) return f;
+    }
+  }
+  return null;
+}
+function findNodeAnywhere(id){
+  for(const t of TABS){
+    const root = TREE[t.id];
+    const found = searchNodeById(root, id, [root.title]);
+    if(found) return { node: found.node, path: found.path, tabId: t.id };
+  }
+  return null;
+}
+
+const favToggleBtn = document.getElementById('favToggleBtn');
+function updateFavToggleUI(){
+  if(!favToggleBtn || !currentLeaf) return;
+  const fav = isFavorite(currentLeaf.id);
+  favToggleBtn.textContent = fav ? '★ favorito' : '☆ favorito';
+  favToggleBtn.classList.toggle('is-fav', fav);
+}
+favToggleBtn.onclick = ()=>{
+  if(!currentLeaf) return;
+  toggleFavorite(currentLeaf.id);
+};
+
+const favBtn = document.getElementById('favBtn');
+const favMenu = document.getElementById('favMenu');
+const favCountEl = document.getElementById('favCount');
+favBtn.onclick = (e)=>{
+  e.stopPropagation();
+  const willShow = favMenu.hidden;
+  favMenu.hidden = !willShow;
+  if(willShow) renderFavMenu();
+};
+document.addEventListener('click', (e)=>{
+  if(!favMenu.hidden && !e.target.closest('#favDropdown')) favMenu.hidden = true;
+});
+
+function renderFavMenu(){
+  const favs = getFavorites();
+  favCountEl.textContent = favs.length ? (' (' + favs.length + ')') : '';
+  favMenu.innerHTML = '';
+  if(favs.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'fav-empty';
+    empty.textContent = 'Sin favoritos todavía — abre un apartado y pulsa "☆ favorito".';
+    favMenu.appendChild(empty);
+    return;
+  }
+  favs.forEach(id=>{
+    const found = findNodeAnywhere(id);
+    if(!found) return;
+    const row = document.createElement('div');
+    row.className = 'fav-item-row';
+    const textWrap = document.createElement('div');
+    textWrap.className = 'fav-item-text';
+    const pathEl = document.createElement('span');
+    pathEl.className = 'fav-item-path';
+    pathEl.textContent = found.path.slice(0,-1).join(' › ') || TREE[found.tabId].title;
+    const titleEl = document.createElement('span');
+    titleEl.className = 'fav-item-title';
+    titleEl.textContent = found.node.title;
+    textWrap.appendChild(pathEl);
+    textWrap.appendChild(titleEl);
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'fav-item-remove';
+    removeBtn.textContent = '✕';
+    removeBtn.title = 'Quitar de favoritos';
+    removeBtn.onclick = (e)=>{ e.stopPropagation(); toggleFavorite(id); };
+    row.appendChild(textWrap);
+    row.appendChild(removeBtn);
+    row.onclick = ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.textContent === TREE[found.tabId].title));
+      renderSidebarTree(found.tabId);
+      document.querySelectorAll('.node.active').forEach(n=>n.classList.remove('active'));
+      openLeaf(found.node, found.path);
+      favMenu.hidden = true;
+    };
+    favMenu.appendChild(row);
+  });
+}
+renderFavMenu();
 
 // ---- edit mode ----
 editToggle.onclick = ()=>{
@@ -171,74 +296,6 @@ document.getElementById('resetBtn').onclick = ()=>{
     toast('Restaurado ✓');
   }
 };
-
-// ---- exportar / importar copia de seguridad ----
-function collectAllLeafIds(node){
-  let ids = [];
-  (node.children||[]).forEach(c=>{
-    if(c.leaf) ids.push(c.id);
-    if(c.children) ids = ids.concat(collectAllLeafIds(c));
-  });
-  return ids;
-}
-const ALL_LEAF_IDS = Object.keys(TREE).reduce((ids, key)=> ids.concat(collectAllLeafIds(TREE[key])), []);
-
-document.getElementById('exportBtn').onclick = ()=>{
-  const data = {};
-  ALL_LEAF_IDS.forEach(id=>{
-    const v = safeStorage.getItem(storageKey(id));
-    if(v !== null) data[id] = v;
-  });
-  if(Object.keys(data).length === 0){
-    toast('No hay ediciones que exportar todavía');
-    return;
-  }
-  const payload = {app:'rotatorio-nefro', exportedAt: new Date().toISOString(), data};
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'rotatorio-nefro-backup-' + new Date().toISOString().slice(0,10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  toast('Copia de seguridad descargada ✓');
-};
-
-const importFileEl = document.getElementById('importFile');
-document.getElementById('importBtn').onclick = ()=> importFileEl.click();
-importFileEl.addEventListener('change', (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    try{
-      const payload = JSON.parse(reader.result);
-      const data = payload.data || payload;
-      let count = 0;
-      Object.keys(data).forEach(id=>{
-        if(ALL_LEAF_IDS.includes(id)){
-          safeStorage.setItem(storageKey(id), data[id]);
-          count++;
-        }
-      });
-      if(count === 0){
-        toast('El archivo no contiene secciones reconocidas');
-        return;
-      }
-      if(currentLeaf){
-        const saved = safeStorage.getItem(storageKey(currentLeaf.id));
-        sectionContentEl.innerHTML = saved !== null ? saved : currentLeaf.content();
-      }
-      toast('Importadas ' + count + ' secciones ✓');
-    }catch(err){
-      alert('Archivo no válido: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-  importFileEl.value = '';
-});
 
 /* =========================================================
    TABLE INTERACTIONS
