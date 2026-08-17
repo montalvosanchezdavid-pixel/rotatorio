@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CubeQ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="ambient"></div>
+<div id="discolights"></div>
+
+<div id="soundHint">toca la pantalla para activar el sonido</div>
+<button id="soundToggle" type="button" aria-label="Silenciar / activar sonido">SONIDO ON</button>
+
+<div id="stage">
+  <div id="sphere">
+    <div id="face" class="expr-neutral">
+      <div class="brows">
+        <div class="brow brow-l"></div>
+        <div class="brow brow-r"></div>
+      </div>
+      <div class="eyes">
+        <div class="eye eye-l"><div class="pupil"></div></div>
+        <div class="eye eye-r"><div class="pupil"></div></div>
+      </div>
+      <svg id="mouth" viewBox="0 0 220 70">
+        <path id="mouthPath" d="M20,35 Q110,35 200,35"></path>
+        <ellipse id="mouthOpen" cx="110" cy="35" rx="0" ry="0"></ellipse>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div id="fx"></div>
+
+<script src="sound.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+  var hint = document.getElementById('soundHint');
+  var btn = document.getElementById('soundToggle');
+
+  document.addEventListener('cubeq-sound-unlocked', function(){
+    hint.classList.add('hidden');
+  });
+
+  btn.addEventListener('click', function(e){
+    e.stopPropagation();
+    CubeQSound.unlock();
+    var muted = !CubeQSound.isMuted();
+    CubeQSound.setMuted(muted);
+    btn.textContent = muted ? 'SONIDO OFF' : 'SONIDO ON';
+    btn.classList.toggle('is-muted', muted);
+  });
+})();
+</script>
+</body>
+</html>
