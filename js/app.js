@@ -143,6 +143,7 @@ function openLeaf(child, path){
   saveIndicator.classList.remove('show');
   window.scrollTo({top:0, behavior:'instant'});
   updateFavToggleUI();
+  if(typeof initWidgets === 'function') initWidgets(sectionContentEl);
 
   if(child.id === 'c12'){
     setTimeout(()=> ensureThreeLoaded(initHeart3D), 0);

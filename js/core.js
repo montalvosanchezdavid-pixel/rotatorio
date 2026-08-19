@@ -12,6 +12,12 @@ function registerSpecialty(cfg){
   SPECIALTIES.push(cfg);
 }
 
+// ---- datos para los widgets interactivos ----
+// Los archivos de content/ registran aquí sus tablas/selectores y el HTML
+// solo lleva un marcador: <div data-widget="matrix" data-src="NOMBRE"></div>
+const WIDGET_DATA = {};
+function registerWidgetData(name, data){ WIDGET_DATA[name] = data; }
+
 // ---- almacenamiento (con reserva en memoria si falla localStorage) ----
 const memStore = {};
 const safeStorage = {
