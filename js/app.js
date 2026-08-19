@@ -1,25 +1,10 @@
 // =============================================================
 // APP — lógica de la aplicación (independiente del contenido)
 // =============================================================
-const TABS = [
-  {id:'nefrologia', label:'NEFROLOGÍA'},
-  {id:'cardiologia', label:'CARDIOLOGÍA'},
-  {id:'neumologia', label:'NEUMOLOGÍA'},
-  {id:'infecciosas', label:'INFECCIOSAS'},
-  {id:'interna', label:'MEDICINA INTERNA'},
-  {id:'coagulacion', label:'COAGULACIÓN'},
-  {id:'bancosangre', label:'BANCO DE SANGRE'},
-];
-
-const TREE = {
-  nefrologia: NEFRO_TREE,
-  cardiologia: CARDIO_TREE,
-  neumologia: NEUMO_TREE,
-  infecciosas: INFECCIOSAS_TREE,
-  interna: INTERNA_TREE,
-  coagulacion: COAG_TREE,
-  bancosangre: BANCO_TREE,
-};
+// Todo sale del registro (js/specialties.js): una sola fuente de verdad.
+const TABS = SPECIALTIES;
+const TREE = {};
+SPECIALTIES.forEach(s=>{ TREE[s.id] = s.tree; });
 
 /* =========================================================
    RENDER
@@ -46,18 +31,23 @@ function toast(msg){
   toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 1800);
 }
 
-// ---- tabs ----
+// ---- pestañas del archivador ----
 TABS.forEach((t,i)=>{
   const b = document.createElement('button');
   b.className = 'tab-btn' + (i===0?' active':'');
-  b.textContent = t.label;
+  b.style.setProperty('--tab', t.accent);
+  b.textContent = t.short;
+  b.title = t.label;
+  b.dataset.id = t.id;
   b.onclick = ()=>{
     document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
+    document.documentElement.style.setProperty('--tab-active', t.accent);
     renderSidebarTree(t.id);
   };
   tabsEl.appendChild(b);
 });
+document.documentElement.style.setProperty('--tab-active', TABS[0].accent);
 
 // ---- sidebar tree ----
 function buildTree(node, depth, path){
@@ -116,8 +106,22 @@ function buildTree(node, depth, path){
   return ul;
 }
 
+// Marca una pestaña como activa y pinta su árbol.
+function activateTab(tabId){
+  const spec = TABS.find(t=> t.id === tabId);
+  document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.id === tabId));
+  if(spec) document.documentElement.style.setProperty('--tab-active', spec.accent);
+  renderSidebarTree(tabId);
+}
+
 function renderSidebarTree(tabId){
   const rootNode = TREE[tabId];
+  const spec = TABS.find(t=> t.id === tabId);
+  const titleEl = document.getElementById('sidebarTitle');
+  if(titleEl && spec){
+    titleEl.textContent = '// ' + spec.label.toLowerCase();
+    titleEl.style.color = spec.accent;
+  }
   treeEl.innerHTML = '';
   const rootTree = buildTree(rootNode, 1, [rootNode.title]);
   treeEl.appendChild(rootTree);
@@ -128,15 +132,9 @@ function renderSidebarTree(tabId){
 }
 renderSidebarTree(TABS[0].id);
 
-// ---- storage (con fallback en memoria si localStorage no está disponible) ----
+// ---- storage (safeStorage vive en core.js) ----
 const STORE_PREFIX = 'nefro_blog_';
 function storageKey(id){ return STORE_PREFIX + id; }
-const memStore = {};
-const safeStorage = {
-  getItem(k){ try{ return localStorage.getItem(k); }catch(e){ return memStore.hasOwnProperty(k) ? memStore[k] : null; } },
-  setItem(k,v){ try{ localStorage.setItem(k,v); }catch(e){ memStore[k]=v; } },
-  removeItem(k){ try{ localStorage.removeItem(k); }catch(e){ delete memStore[k]; } }
-};
 
 function openLeaf(child, path){
   disposeHeart3D();
@@ -174,21 +172,10 @@ function toggleFavorite(id){
   renderFavMenu();
 }
 
-function searchNodeById(node, id, pathSoFar){
-  for(const c of node.children||[]){
-    const newPath = pathSoFar.concat(c.title);
-    if(c.id === id) return {node:c, path:newPath};
-    if(c.children){
-      const f = searchNodeById(c, id, newPath);
-      if(f) return f;
-    }
-  }
-  return null;
-}
+// Busca un apartado por id en todas las especialidades (usa findInTree de core.js)
 function findNodeAnywhere(id){
   for(const t of TABS){
-    const root = TREE[t.id];
-    const found = searchNodeById(root, id, [root.title]);
+    const found = findInTree(TREE[t.id], id);
     if(found) return { node: found.node, path: found.path, tabId: t.id };
   }
   return null;
@@ -253,8 +240,7 @@ function renderFavMenu(){
     row.appendChild(textWrap);
     row.appendChild(removeBtn);
     row.onclick = ()=>{
-      document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.textContent === TREE[found.tabId].title));
-      renderSidebarTree(found.tabId);
+      activateTab(found.tabId);
       document.querySelectorAll('.node.active').forEach(n=>n.classList.remove('active'));
       openLeaf(found.node, found.path);
       favMenu.hidden = true;

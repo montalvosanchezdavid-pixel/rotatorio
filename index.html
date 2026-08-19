@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>rotatorio://blog</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="notebook.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/notebook.css">
 </head>
 <body>
 
 <div class="topbar">
-  <div class="logo">David Montalvo<span>:~$</span></div>
+  <div class="logo">David Montalvo</div>
   <div class="tabs" id="tabs"></div>
   <div class="top-actions">
     <button class="icon-btn" id="editToggle" title="Activar/desactivar edición">✎ editar: OFF</button>
@@ -34,7 +34,7 @@
 
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-title">// pestañas</div>
+    <div class="sidebar-title" id="sidebarTitle">// nefrología</div>
     <ul class="tree" id="sectionTree"></ul>
   </aside>
 
@@ -77,6 +77,7 @@
       mi libreta del rotatorio
     </div>
     <div class="nb-head-actions">
+      <button class="nb-ghost-btn" id="nbTable" title="Insertar una tabla">⊞ tabla</button>
       <button class="nb-ghost-btn" id="nbAddPage" title="Añadir una página nueva al final">+ nueva página</button>
       <button class="nb-ghost-btn nb-danger" id="nbDelPage" title="Eliminar la página actual">eliminar</button>
       <button class="nb-ghost-btn nb-close" id="nbClose" title="Cerrar la libreta (Esc)">✕</button>
@@ -114,6 +115,18 @@
     </div>
   </div>
 
+  <!-- barra de formato: aparece solo al seleccionar texto -->
+  <div class="nb-fmt" id="nbFmt" hidden>
+    <button data-cmd="bold" title="Negrita (Ctrl+B)"><b>B</b></button>
+    <button data-cmd="italic" title="Cursiva (Ctrl+I)"><i>I</i></button>
+    <span class="nb-fmt-sep"></span>
+    <button class="nb-sw" data-hl="amarillo" style="--sw:#ffd166" title="Subrayar en amarillo"></button>
+    <button class="nb-sw" data-hl="verde"    style="--sw:#00ff9c" title="Subrayar en verde"></button>
+    <button class="nb-sw" data-hl="azul"     style="--sw:#00c8ff" title="Subrayar en azul"></button>
+    <button class="nb-sw" data-hl="rosa"     style="--sw:#ff6b6b" title="Subrayar en rojo"></button>
+    <button data-hl="none" title="Quitar subrayado">⌀</button>
+  </div>
+
   <div class="nb-foot">
     <div class="nb-nav">
       <button class="nb-nav-btn" id="nbPrev" title="Página anterior (←)">‹</button>
@@ -127,14 +140,18 @@
   </div>
 </div>
 
-<script src="content-nefrologia.js"></script>
-<script src="content-cardiologia.js"></script>
-<script src="content-neumologia.js"></script>
-<script src="content-infecciosas.js"></script>
-<script src="content-medicina-interna.js"></script>
-<script src="content-coagulacion.js"></script>
-<script src="content-banco-sangre.js"></script>
-<script src="app.js"></script>
-<script src="notebook.js"></script>
+<script src="js/core.js"></script>
+
+<script src="content/nefrologia.js"></script>
+<script src="content/cardiologia.js"></script>
+<script src="content/neumologia.js"></script>
+<script src="content/infecciosas.js"></script>
+<script src="content/medicina-interna.js"></script>
+<script src="content/coagulacion.js"></script>
+<script src="content/banco-sangre.js"></script>
+
+<script src="js/specialties.js"></script>
+<script src="js/app.js"></script>
+<script src="js/notebook.js"></script>
 </body>
 </html>

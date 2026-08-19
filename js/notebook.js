@@ -221,11 +221,34 @@ function save(now){
 }
 
 // ---------- índices ----------
-function leftIdx(){ return twoUp ? 2*pos - 1 : -1; }
-function rightIdx(){ return twoUp ? 2*pos : pos; }
-function canNext(){ return twoUp ? (2*pos + 1 <= pages.length - 1) : (pos < pages.length - 1); }
+// pos 0 = portada (una sola hoja, a la derecha, como un libro cerrado).
+// pos >= 1 = pliego: izquierda 2*pos-3 · derecha 2*pos-2 (móvil: pos-1).
+const COVER = -1000; // marca de portada (fuera del rango de páginas)
+const NONE  = -999;  // no hay hoja
+
+const COVER_HTML =
+  '<div class="nb-cover">' +
+    '<div class="nb-cover-line"></div>' +
+    '<div class="nb-cover-title">Notebook</div>' +
+    '<div class="nb-cover-sub">David Montalvo · rotatorio</div>' +
+    '<div class="nb-cover-line"></div>' +
+  '</div>';
+
+function isCoverIdx(i){ return i === COVER; }
+function leftIdx(){ return (twoUp && pos >= 1) ? (2*pos - 3) : NONE; }
+function rightIdx(){ return pos === 0 ? COVER : (twoUp ? (2*pos - 2) : (pos - 1)); }
+function maxPos(){ return twoUp ? (Math.floor(pages.length/2) + 1) : pages.length; }
+function canNext(){ return pos < maxPos(); }
 function canPrev(){ return pos > 0; }
-function focusedIdx(){ return Math.min(rightIdx(), pages.length - 1); }
+function focusedIdx(){
+  if(pos === 0) return 0;
+  return Math.min(Math.max(0, rightIdx()), pages.length - 1);
+}
+// ¿en qué pos queda visible la página i?
+function posForPage(i){
+  if(!twoUp) return i + 1;
+  return (i % 2 === 0) ? (i/2 + 1) : ((i + 3)/2);
+}
 
 // ---------- DOM ----------
 let el = {};
@@ -250,24 +273,30 @@ function cacheDom(){
   el.btnNext   = document.getElementById('nbNext');
   el.search    = document.getElementById('nbSearch');
   el.results   = document.getElementById('nbResults');
+  el.fmt       = document.getElementById('nbFmt');
 }
 
 // ---------- pintado ----------
-function paperHtml(i){ return (i >= 0 && i < pages.length) ? (pages[i] || '') : null; }
+function paperHtml(i){
+  if(isCoverIdx(i)) return COVER_HTML;
+  return (i >= 0 && i < pages.length) ? (pages[i] || '') : null;
+}
+
+// Aplica contenido + estado a una cara (hoja visible o cara que gira)
+function paintPaper(paperEl, folioEl, sideEl, idx, editable){
+  const html = paperHtml(idx);
+  const cover = isCoverIdx(idx);
+  if(sideEl) sideEl.classList.toggle('is-blank', html === null);
+  paperEl.classList.toggle('is-cover', cover);
+  paperEl.innerHTML = html || '';
+  paperEl.contentEditable = (editable && html !== null && !cover) ? 'true' : 'false';
+  if(folioEl) folioEl.textContent = (html !== null && !cover) ? (idx + 1) : '';
+}
 
 function render(){
   const li = leftIdx(), ri = rightIdx();
-  const lh = paperHtml(li), rh = paperHtml(ri);
-
-  el.leftSide.classList.toggle('is-blank', lh === null);
-  el.rightSide.classList.toggle('is-blank', rh === null);
-
-  el.leftPaper.innerHTML = lh || '';
-  el.rightPaper.innerHTML = rh || '';
-  el.leftPaper.contentEditable = (lh !== null) ? 'true' : 'false';
-  el.rightPaper.contentEditable = (rh !== null) ? 'true' : 'false';
-  el.leftFolio.textContent  = (lh !== null) ? (li + 1) : '';
-  el.rightFolio.textContent = (rh !== null) ? (ri + 1) : '';
+  paintPaper(el.leftPaper,  el.leftFolio,  el.leftSide,  li, true);
+  paintPaper(el.rightPaper, el.rightFolio, el.rightSide, ri, true);
 
   el.btnPrev.disabled = !canPrev();
   el.btnNext.disabled = !canNext();
@@ -275,7 +304,10 @@ function render(){
   el.edgeNext.classList.toggle('is-off', !canNext());
 
   const total = pages.length;
-  if(twoUp && lh !== null && rh !== null){
+  const lh = paperHtml(li), rh = paperHtml(ri);
+  if(pos === 0){
+    el.counter.innerHTML = '<b>portada</b> / ' + total;
+  }else if(twoUp && lh !== null && rh !== null){
     el.counter.innerHTML = '<b>' + (li+1) + '–' + (ri+1) + '</b> / ' + total;
   }else{
     el.counter.innerHTML = '<b>' + (focusedIdx()+1) + '</b> / ' + total;
@@ -304,48 +336,33 @@ function setFlipAngle(deg, progress){
   el.shadeB.style.opacity = (0.68 * (1 - progress)).toFixed(3);
 }
 
+// Índices que se ven en una posición dada (sin tocar el estado)
+function idxAt(p, side){
+  if(side === 'right') return p === 0 ? COVER : (twoUp ? (2*p - 2) : (p - 1));
+  return (twoUp && p >= 1) ? (2*p - 3) : NONE;
+}
+
 // prepara la hoja que gira; dir: 1 = avanzar, -1 = retroceder
 function prepareFlip(dir){
-  let frontHtml, backHtml, frontNo, backNo;
+  const target = pos + dir;
+  let frontIdx, backIdx;
 
   if(dir === 1){
-    if(twoUp){
-      frontHtml = paperHtml(2*pos);     frontNo = 2*pos + 1;
-      backHtml  = paperHtml(2*pos + 1); backNo  = 2*pos + 2;
-      // bajo la hoja aparece ya la página siguiente del pliego
-      const nr = paperHtml(2*pos + 2);
-      el.rightSide.classList.toggle('is-blank', nr === null);
-      el.rightPaper.innerHTML = nr || '';
-      el.rightPaper.contentEditable = 'false';
-      el.rightFolio.textContent = (nr !== null) ? (2*pos + 3) : '';
-    }else{
-      frontHtml = paperHtml(pos);       frontNo = pos + 1;
-      backHtml  = null;                 backNo  = null;
-      const nr = paperHtml(pos + 1);
-      el.rightPaper.innerHTML = nr || '';
-      el.rightPaper.contentEditable = 'false';
-      el.rightFolio.textContent = (nr !== null) ? (pos + 2) : '';
-    }
+    // gira la hoja de la derecha: su cara es lo que hay ahora, su dorso lo que
+    // quedará a la izquierda al terminar
+    frontIdx = idxAt(pos, 'right');
+    backIdx  = twoUp ? idxAt(target, 'left') : NONE;
+    // debajo asoma ya la página que quedará a la derecha
+    paintPaper(el.rightPaper, el.rightFolio, el.rightSide, idxAt(target, 'right'), false);
   }else{
-    if(twoUp){
-      frontHtml = paperHtml(2*pos - 2); frontNo = 2*pos - 1;
-      backHtml  = paperHtml(2*pos - 1); backNo  = 2*pos;
-      // bajo la hoja aparece la página izquierda del pliego anterior
-      const nl = paperHtml(2*pos - 3);
-      el.leftSide.classList.toggle('is-blank', nl === null);
-      el.leftPaper.innerHTML = nl || '';
-      el.leftPaper.contentEditable = 'false';
-      el.leftFolio.textContent = (nl !== null) ? (2*pos - 2) : '';
-    }else{
-      frontHtml = paperHtml(pos - 1);   frontNo = pos;
-      backHtml  = null;                 backNo  = null;
-    }
+    // vuelve la hoja anterior: acaba en la derecha, y su dorso es la izquierda actual
+    frontIdx = idxAt(target, 'right');
+    backIdx  = twoUp ? idxAt(pos, 'left') : NONE;
+    if(twoUp) paintPaper(el.leftPaper, el.leftFolio, el.leftSide, idxAt(target, 'left'), false);
   }
 
-  el.flipFront.querySelector('.nb-paper').innerHTML = frontHtml || '';
-  el.flipBack.querySelector('.nb-paper').innerHTML  = backHtml  || '';
-  el.flipFront.querySelector('.nb-folio').textContent = frontNo || '';
-  el.flipBack.querySelector('.nb-folio').textContent  = backNo  || '';
+  paintPaper(el.flipFront.querySelector('.nb-paper'), el.flipFront.querySelector('.nb-folio'), null, frontIdx, false);
+  paintPaper(el.flipBack.querySelector('.nb-paper'),  el.flipBack.querySelector('.nb-folio'),  null, backIdx,  false);
   el.flip.hidden = false;
 }
 
@@ -366,6 +383,7 @@ function flip(dir){
   if(dir === -1 && !canPrev()) return;
   animating = true;
   hideResults();
+  if(el.fmt) el.fmt.hidden = true;
 
   prepareFlip(dir);
   setFlipAngle(dir === 1 ? 0 : -180, dir === 1 ? 0 : 1);
@@ -495,20 +513,22 @@ function runSearch(q){
 function goToPage(i){
   if(animating) return;
   i = Math.max(0, Math.min(pages.length - 1, i));
-  pos = twoUp ? Math.floor(i / 2) : i;
-  // en pliego, la página buscada debe quedar visible (izq o dcha)
-  if(twoUp && (2*pos !== i) && (2*pos - 1 !== i)) pos = Math.ceil(i / 2);
+  pos = posForPage(i);
   render();
 }
 
 // ---------- páginas ----------
 function addPage(){
   if(animating) return;
+  const i = pages.length;
   pages.push('');
   save(true);
-  goToPage(pages.length - 1);
-  const p = el.rightPaper;
-  setTimeout(()=>{ if(p.isContentEditable) p.focus(); }, 60);
+  goToPage(i);
+  // enfoca la hoja donde haya caído la página nueva
+  setTimeout(()=>{
+    const target = (leftIdx() === i) ? el.leftPaper : el.rightPaper;
+    if(target.isContentEditable) target.focus();
+  }, 60);
 }
 
 function deletePage(){
@@ -521,6 +541,120 @@ function deletePage(){
   pages.splice(i, 1);
   save(true);
   goToPage(Math.min(i, pages.length - 1));
+}
+
+// ---------- formato: negrita, cursiva, subrayado de color, tablas ----------
+const HL = {
+  amarillo:'rgba(255,209,102,0.30)',
+  verde:   'rgba(0,255,156,0.24)',
+  azul:    'rgba(0,200,255,0.26)',
+  rosa:    'rgba(255,107,107,0.28)'
+};
+let lastRange = null;
+
+function inPaper(node){
+  while(node && node !== document){
+    if(node.classList && node.classList.contains('nb-paper') && node.isContentEditable) return node;
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function rememberSelection(){
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount) lastRange = sel.getRangeAt(0).cloneRange();
+}
+function restoreSelection(){
+  if(!lastRange) return;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(lastRange);
+}
+
+function exec(cmd, val){
+  restoreSelection();
+  try{ document.execCommand('styleWithCSS', false, true); }catch(e){}
+  document.execCommand(cmd, false, val || null);
+  rememberSelection();
+  syncPaperToModel();
+}
+
+// vuelca lo editado al modelo (tras cualquier comando de formato)
+function syncPaperToModel(){
+  const li = leftIdx(), ri = rightIdx();
+  if(el.leftPaper.isContentEditable  && li >= 0 && li < pages.length) pages[li] = el.leftPaper.innerHTML;
+  if(el.rightPaper.isContentEditable && ri >= 0 && ri < pages.length) pages[ri] = el.rightPaper.innerHTML;
+  save();
+}
+
+function positionToolbar(){
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return;
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  if(!rect.width && !rect.height) return;
+  const bar = el.fmt;
+  bar.hidden = false;
+  const bw = bar.offsetWidth, bh = bar.offsetHeight;
+  let x = rect.left + rect.width/2 - bw/2;
+  let y = rect.top - bh - 10;
+  x = Math.max(8, Math.min(window.innerWidth - bw - 8, x));
+  if(y < 8) y = rect.bottom + 10;
+  bar.style.left = x + 'px';
+  bar.style.top  = y + 'px';
+}
+
+function updateToolbar(){
+  const sel = window.getSelection();
+  if(!sel || sel.isCollapsed || !sel.rangeCount){ el.fmt.hidden = true; return; }
+  if(!inPaper(sel.anchorNode) || !inPaper(sel.focusNode)){ el.fmt.hidden = true; return; }
+  rememberSelection();
+  positionToolbar();
+}
+
+// ---- tablas ----
+function insertTable(){
+  const paper = document.activeElement && inPaper(document.activeElement) ? document.activeElement : null;
+  const target = paper || (el.rightPaper.isContentEditable ? el.rightPaper : el.leftPaper);
+  if(!target || !target.isContentEditable){ return; }
+  target.focus();
+  if(lastRange && inPaper(lastRange.startContainer)) restoreSelection();
+  const cell = '<td><br></td>';
+  const row  = '<tr>' + cell.repeat(3) + '</tr>';
+  const html = '<table class="nb-table"><tbody>' + row.repeat(3) + '</tbody></table><div><br></div>';
+  document.execCommand('insertHTML', false, html);
+  syncPaperToModel();
+}
+
+// Tab dentro de una tabla: siguiente celda; en la última, crea fila nueva.
+function tableTab(e){
+  const sel = window.getSelection();
+  if(!sel.rangeCount) return false;
+  let node = sel.anchorNode;
+  while(node && node.nodeName !== 'TD') node = node.parentNode;
+  if(!node) return false;
+  e.preventDefault();
+  const cells = [...node.closest('table').querySelectorAll('td')];
+  let i = cells.indexOf(node) + (e.shiftKey ? -1 : 1);
+  if(i >= cells.length){
+    const tr = node.closest('tr');
+    const nueva = tr.cloneNode(true);
+    nueva.querySelectorAll('td').forEach(td=> td.innerHTML = '<br>');
+    tr.parentNode.appendChild(nueva);
+    placeCaret(nueva.querySelector('td'));
+    syncPaperToModel();
+    return true;
+  }
+  if(i < 0) i = 0;
+  placeCaret(cells[i]);
+  return true;
+}
+function placeCaret(td){
+  const r = document.createRange();
+  r.selectNodeContents(td);
+  r.collapse(true);
+  const s = window.getSelection();
+  s.removeAllRanges();
+  s.addRange(r);
 }
 
 // ---------- responsive ----------
@@ -548,6 +682,7 @@ function close(){
   el.overlay.hidden = true;
   document.body.classList.remove('nb-open');
   hideResults();
+  if(el.fmt) el.fmt.hidden = true;
 }
 
 // ---------- arranque ----------
@@ -566,6 +701,32 @@ function init(){
 
   bindEditing(el.leftPaper,  ()=> leftIdx());
   bindEditing(el.rightPaper, ()=> rightIdx());
+
+  // ---- barra de formato flotante ----
+  document.getElementById('nbTable').addEventListener('click', insertTable);
+  document.addEventListener('selectionchange', ()=>{ if(isOpen) updateToolbar(); });
+  el.fmt.addEventListener('mousedown', e=> e.preventDefault()); // no robar el foco
+  el.fmt.addEventListener('click', (e)=>{
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.dataset.cmd) exec(b.dataset.cmd);
+    else if(b.dataset.hl) exec('hiliteColor', b.dataset.hl === 'none' ? 'transparent' : HL[b.dataset.hl]);
+  });
+
+  // Tab dentro de tablas + atajos de formato
+  [el.leftPaper, el.rightPaper].forEach(p=>{
+    p.addEventListener('keydown', (e)=>{
+      if(e.key === 'Tab' && tableTab(e)) return;
+      if((e.ctrlKey || e.metaKey) && !e.shiftKey){
+        const k = e.key.toLowerCase();
+        if(k === 'b' || k === 'i'){
+          e.preventDefault();
+          rememberSelection();
+          exec(k === 'b' ? 'bold' : 'italic');
+        }
+      }
+    });
+  });
 
   // arrastre desde los laterales
   [[el.edgeNext, 1], [el.edgePrev, -1]].forEach(([node, dir])=>{
