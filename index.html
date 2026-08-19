@@ -6,10 +6,52 @@
 <title>rotatorio://blog</title>
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/notebook.css">
+<link rel="stylesheet" href="css/home.css">
 </head>
 <body>
 
+<!-- ===================== HOME: ARCHIVADOR ===================== -->
+<section class="home" id="home">
+  <div class="home-bar">
+    <div class="home-brand"><span class="dot"></span>David Montalvo</div>
+    <div class="home-links">
+      <button class="home-link" id="homeNotebook">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10.5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7z"/><path d="M7 4v16"/><path d="M4.6 6.6h2.6M4.6 9.8h2.6M4.6 13h2.6M4.6 16.2h2.6"/></svg>
+        Libreta
+      </button>
+      <button class="home-link" id="homeFavs">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.2l2.3 4.8 5.2.7-3.8 3.7.9 5.2-4.6-2.5-4.6 2.5.9-5.2L4.5 9.7l5.2-.7z"/></svg>
+        Favoritos
+      </button>
+    </div>
+  </div>
+
+  <header class="home-head">
+    <p class="home-eyebrow">Residencia de Hematología</p>
+    <h1 class="home-title">Archivador clínico</h1>
+    <p class="home-sub">Apuntes de guardia organizados por especialidad. Abre una carpeta para consultar sus contenidos.</p>
+  </header>
+
+  <div class="cabinet" id="cabinet"></div>
+
+  <div class="folder-detail" id="folderDetail">
+    <div class="folder-detail-inner">
+      <div class="folder-detail-card">
+        <div class="folder-detail-text">
+          <h2 class="folder-detail-title"></h2>
+          <p class="folder-detail-desc"></p>
+        </div>
+        <button class="folder-open-btn">Abrir <span>→</span></button>
+      </div>
+    </div>
+  </div>
+
+  <p class="home-foot">Notas personales de rotatorio · uso propio</p>
+</section>
+
+<!-- ===================== ÁREA DE ESTUDIO ===================== -->
 <div class="topbar">
+  <button class="back-home" id="backHome" title="Volver al archivador">←</button>
   <div class="logo">David Montalvo</div>
   <div class="tabs" id="tabs"></div>
   <div class="top-actions">
@@ -153,5 +195,6 @@
 <script src="js/specialties.js"></script>
 <script src="js/app.js"></script>
 <script src="js/notebook.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

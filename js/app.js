@@ -35,19 +35,16 @@ function toast(msg){
 TABS.forEach((t,i)=>{
   const b = document.createElement('button');
   b.className = 'tab-btn' + (i===0?' active':'');
-  b.style.setProperty('--tab', t.accent);
   b.textContent = t.short;
   b.title = t.label;
   b.dataset.id = t.id;
   b.onclick = ()=>{
     document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    document.documentElement.style.setProperty('--tab-active', t.accent);
     renderSidebarTree(t.id);
   };
   tabsEl.appendChild(b);
 });
-document.documentElement.style.setProperty('--tab-active', TABS[0].accent);
 
 // ---- sidebar tree ----
 function buildTree(node, depth, path){
@@ -108,9 +105,7 @@ function buildTree(node, depth, path){
 
 // Marca una pestaña como activa y pinta su árbol.
 function activateTab(tabId){
-  const spec = TABS.find(t=> t.id === tabId);
   document.querySelectorAll('.tab-btn').forEach(b=> b.classList.toggle('active', b.dataset.id === tabId));
-  if(spec) document.documentElement.style.setProperty('--tab-active', spec.accent);
   renderSidebarTree(tabId);
 }
 
@@ -118,10 +113,7 @@ function renderSidebarTree(tabId){
   const rootNode = TREE[tabId];
   const spec = TABS.find(t=> t.id === tabId);
   const titleEl = document.getElementById('sidebarTitle');
-  if(titleEl && spec){
-    titleEl.textContent = '// ' + spec.label.toLowerCase();
-    titleEl.style.color = spec.accent;
-  }
+  if(titleEl && spec) titleEl.textContent = '// ' + spec.label.toLowerCase();
   treeEl.innerHTML = '';
   const rootTree = buildTree(rootNode, 1, [rootNode.title]);
   treeEl.appendChild(rootTree);

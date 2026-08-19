@@ -1,0 +1,212 @@
+/* =============================================================
+   HOME — archivador clínico
+   Paleta única: verdes (menta → bosque) + blanco/gris neutro.
+   ============================================================= */
+.home{
+  --g-50:#f4faf6;
+  --g-100:#e7f3ec;
+  --g-200:#cfe6d8;
+  --g-300:#a8d0ba;
+  --g-400:#74b291;
+  --g-500:#47906b;
+  --g-600:#337555;
+  --g-700:#265c43;
+  --g-800:#1c4633;
+  --g-900:#123024;
+  --paper:#ffffff;
+  --ink-soft:#5f7268;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+
+  position:fixed;inset:0;z-index:60;
+  overflow-y:auto;overflow-x:hidden;
+  background:linear-gradient(180deg,var(--g-100) 0%,var(--g-50) 34%,var(--paper) 100%);
+  color:var(--g-900);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+.home[hidden]{display:none;}
+
+/* ---------- cabecera ---------- */
+.home-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  max-width:1120px;margin:0 auto;padding:26px 32px 0;
+}
+.home-brand{
+  font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--g-800);
+  display:flex;align-items:center;gap:9px;
+}
+.home-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--g-500);}
+.home-links{display:flex;gap:6px;}
+.home-link{
+  background:transparent;border:1px solid transparent;
+  font-family:var(--sans);font-size:13.5px;color:var(--g-600);
+  padding:8px 14px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;
+  transition:background .3s ease,color .3s ease,border-color .3s ease;
+}
+.home-link:hover{background:var(--g-100);color:var(--g-800);border-color:var(--g-200);}
+.home-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;}
+
+.home-head{max-width:1120px;margin:0 auto;padding:64px 32px 8px;}
+.home-eyebrow{
+  font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--g-500);margin:0 0 16px;
+}
+.home-title{
+  font-size:clamp(34px,5.4vw,54px);line-height:1.05;letter-spacing:-.03em;
+  font-weight:600;margin:0;color:var(--g-900);
+}
+.home-sub{
+  font-size:17px;line-height:1.65;color:var(--ink-soft);
+  margin:18px 0 0;max-width:52ch;font-weight:400;
+}
+
+/* ---------- archivador ---------- */
+.cabinet{
+  max-width:1120px;margin:0 auto;padding:56px 32px 40px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));
+  gap:30px 26px;
+}
+
+.folder{
+  position:relative;height:186px;
+  border:none;background:none;padding:0;margin:0;
+  cursor:pointer;text-align:left;
+  font-family:var(--sans);
+  perspective:900px;
+  transition:transform .34s cubic-bezier(.22,.75,.3,1);
+}
+.folder:focus-visible{outline:2px solid var(--g-500);outline-offset:6px;border-radius:12px;}
+
+/* cuerpo trasero de la carpeta (asoma por arriba, como el cartón de atrás) */
+.folder-back{
+  position:absolute;left:0;right:0;bottom:0;top:16px;
+  background:var(--g-200);
+  border-radius:9px 9px 11px 11px;
+  transition:background .34s ease,transform .34s cubic-bezier(.22,.75,.3,1);
+}
+
+/* lengüeta escalonada, como una carpeta colgante */
+.folder-tab{
+  position:absolute;top:0;left:var(--tab-x,10%);
+  min-width:96px;max-width:60%;
+  padding:6px 14px 8px;
+  background:var(--g-200);
+  border-radius:8px 8px 0 0;
+  font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--g-700);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:background .34s ease,color .34s ease,transform .34s cubic-bezier(.22,.75,.3,1);
+}
+
+/* tapa delantera: es la que se abre */
+.folder-front{
+  position:absolute;left:0;right:0;bottom:0;top:34px;
+  background:var(--paper);
+  border:1px solid var(--g-200);
+  border-radius:10px;
+  padding:20px 20px 18px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  transform-origin:bottom center;
+  box-shadow:0 1px 2px rgba(18,48,36,.05);
+  transition:transform .36s cubic-bezier(.22,.75,.3,1),
+             box-shadow .36s ease, border-color .3s ease;
+}
+.folder-icon{
+  width:26px;height:26px;stroke:var(--g-500);fill:none;
+  stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+  transition:stroke .3s ease;
+}
+.folder-txt{display:block;}
+.folder-name{
+  display:block;
+  font-size:16.5px;font-weight:600;letter-spacing:-.015em;
+  color:var(--g-900);margin:14px 0 5px;line-height:1.25;
+}
+.folder-meta{display:block;font-size:12.5px;color:var(--ink-soft);margin:0;}
+
+/* hover: la carpeta se saca del archivador y la tapa se entreabre */
+.folder:hover{transform:translateY(-7px);}
+.folder:hover .folder-back{background:var(--g-300);}
+.folder:hover .folder-tab{background:var(--g-300);color:var(--g-800);}
+.folder:hover .folder-front{
+  transform:rotateX(-12deg);
+  box-shadow:0 16px 30px -14px rgba(18,48,36,.34);
+  border-color:var(--g-300);
+}
+
+/* carpeta seleccionada: queda abierta */
+.folder.is-open{transform:translateY(-7px);}
+.folder.is-open .folder-back{background:var(--g-400);}
+.folder.is-open .folder-tab{background:var(--g-400);color:var(--paper);}
+.folder.is-open .folder-front{
+  transform:rotateX(-19deg);
+  box-shadow:0 20px 34px -16px rgba(18,48,36,.4);
+  border-color:var(--g-400);
+}
+
+/* ---------- detalle desplegable ---------- */
+.folder-detail{
+  max-width:1120px;margin:0 auto;padding:0 32px;
+  display:grid;grid-template-rows:0fr;
+  transition:grid-template-rows .38s cubic-bezier(.22,.75,.3,1);
+}
+.folder-detail.is-open{grid-template-rows:1fr;}
+.folder-detail-inner{overflow:hidden;}
+.folder-detail-card{
+  background:var(--g-50);
+  border:1px solid var(--g-200);
+  border-radius:14px;
+  padding:28px 30px;
+  margin-bottom:48px;
+  display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;
+  opacity:0;transform:translateY(-6px);
+  transition:opacity .34s ease .06s, transform .34s ease .06s;
+}
+.folder-detail.is-open .folder-detail-card{opacity:1;transform:none;}
+.folder-detail-text{max-width:60ch;}
+.folder-detail-title{
+  font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 8px;color:var(--g-900);
+}
+.folder-detail-desc{font-size:15px;line-height:1.65;color:var(--ink-soft);margin:0;}
+.folder-open-btn{
+  flex-shrink:0;
+  background:var(--g-700);color:var(--paper);
+  border:none;border-radius:999px;
+  font-family:var(--sans);font-size:14px;font-weight:500;
+  padding:13px 26px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:9px;
+  transition:background .3s ease,transform .3s ease;
+}
+.folder-open-btn:hover{background:var(--g-800);transform:translateX(3px);}
+.folder-open-btn span{transition:transform .3s ease;}
+.folder-open-btn:hover span{transform:translateX(3px);}
+
+.home-foot{
+  max-width:1120px;margin:0 auto;padding:0 32px 52px;
+  font-size:12.5px;color:var(--g-400);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .home-head{padding:44px 24px 4px;}
+  .home-bar{padding:20px 24px 0;}
+  .cabinet{padding:40px 24px 32px;gap:24px 20px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  .folder-detail{padding:0 24px;}
+  .home-foot{padding:0 24px 40px;}
+}
+@media (max-width:620px){
+  .home-sub{font-size:15.5px;}
+  .cabinet{grid-template-columns:1fr;gap:18px;padding:34px 20px 26px;}
+  .folder{height:auto;min-height:118px;perspective:none;}
+  .folder-front{position:relative;top:0;padding:16px 18px;flex-direction:row;align-items:center;gap:16px;}
+  .folder-back{top:14px;}
+  .folder-tab{max-width:56%;}
+  .folder-front .folder-txt{flex:1;min-width:0;}
+  .folder-name{margin:0 0 3px;font-size:15.5px;}
+  /* en móvil no hay hover: se abre sin giro 3D */
+  .folder:hover .folder-front,
+  .folder.is-open .folder-front{transform:none;}
+  .folder-detail-card{padding:22px;flex-direction:column;align-items:flex-start;}
+  .folder-open-btn{width:100%;justify-content:center;}
+}
