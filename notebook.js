@@ -21,6 +21,180 @@ let twoUp = false;   // true = pliego de 2 páginas
 let isOpen = false;
 let animating = false;
 
+// ---------- contenido inicial de la libreta ----------
+// Se escribe solo si la libreta está vacía: nunca sobrescribe notas propias.
+const NB_SEED = [
+
+// ---- página 1 ----
+'<div><b>ANTIBIÓTICOS EN LA NEUTROPENIA FEBRIL</b></div>' +
+'<div><br></div>' +
+'<div><b>Definición</b></div>' +
+'<div>Neutrófilos &lt;500/µL (o &lt;1000 con descenso previsto a &lt;500 en 48h)</div>' +
+'<div>+ Tª ≥38.3ºC aislada o ≥38ºC mantenida ≥1h.</div>' +
+'<div><br></div>' +
+'<div><b>Lo primero (primera hora)</b></div>' +
+'<div>· Hemocultivos: 2 sets — periférico + cada luz del catéter.</div>' +
+'<div>· Antibiótico IV en la 1ª hora. NO esperar a los cultivos.</div>' +
+'<div>· Foco: piel/catéter, boca (mucositis), perianal (no tacto rectal),</div>' +
+'<div>&nbsp;&nbsp;pulmón, orina, abdomen. Rx tórax si clínica respiratoria.</div>' +
+'<div><br></div>' +
+'<div><b>Alto riesgo → ingreso + monoterapia antipseudomónica</b></div>' +
+'<div>· Piperacilina-tazobactam 4/0.5 g IV c/6-8h</div>' +
+'<div>· Cefepime 2 g IV c/8h</div>' +
+'<div>· Meropenem 1 g IV c/8h (si sepsis, BLEE previa o alergia)</div>' +
+'<div><br></div>' +
+'<div><b>Añadir cobertura Gram+ SOLO si:</b></div>' +
+'<div>· Inestabilidad hemodinámica / sepsis</div>' +
+'<div>· Sospecha de infección del catéter</div>' +
+'<div>· Infección de piel y partes blandas</div>' +
+'<div>· Mucositis grave</div>' +
+'<div>· Colonización conocida por SARM / neumococo resistente</div>' +
+'<div>· Hemocultivo + para Gram+ pendiente de identificar</div>' +
+'<div>→ Vancomicina (o daptomicina / linezolid).</div>' +
+'<div>→ Retirar a las 48-72h si los cultivos no lo confirman.</div>' +
+'<div><br></div>' +
+'<div><b>Bajo riesgo (MASCC ≥21) → ambulatorio VO</b></div>' +
+'<div>Ciprofloxacino + amoxicilina-clavulánico, con control estrecho.</div>' +
+'<div>(No si profilaxis previa con quinolonas.)</div>' +
+'<div><br></div>' +
+'<div><b>Antifúngico empírico</b></div>' +
+'<div>Fiebre persistente &gt;4-7 días pese a antibiótico de amplio espectro</div>' +
+'<div>con neutropenia prolongada → caspofungina / L-anfotericina B /</div>' +
+'<div>voriconazol. TC de tórax + galactomanano.</div>' +
+'<div>OJO: azoles ↑ niveles de anticalcineurínicos y ↑ QT.</div>' +
+'<div><br></div>' +
+'<div><b>Duración</b></div>' +
+'<div>Hasta apirexia + neutrófilos &gt;500, o completar el tratamiento del</div>' +
+'<div>foco documentado. Desescalar en cuanto haya cultivos.</div>',
+
+// ---- página 2 ----
+'<div><b>CASCADA DE COAGULACIÓN Y DIANA DE LOS FÁRMACOS</b></div>' +
+'<div><br></div>' +
+'<div><b>Vía intrínseca</b> (mide el TTPa)</div>' +
+'<div>XII → XI → IX + VIII ↘</div>' +
+'<div><b>Vía extrínseca</b> (mide el TP / INR)</div>' +
+'<div>Factor tisular + VII ↘</div>' +
+'<div><b>Vía común</b></div>' +
+'<div>X + V → protrombina (II) → TROMBINA (IIa)</div>' +
+'<div>→ fibrinógeno (I) → FIBRINA → XIII la estabiliza</div>' +
+'<div><br></div>' +
+'<div><b>¿Dónde actúa cada fármaco?</b></div>' +
+'<div><br></div>' +
+'<div>· <b>HNF</b> → potencia antitrombina: inhibe IIa y Xa por igual.</div>' +
+'<div>&nbsp;&nbsp;Control TTPa · antídoto protamina.</div>' +
+'<div>· <b>HBPM</b> → antitrombina, sobre todo anti-Xa.</div>' +
+'<div>&nbsp;&nbsp;Control anti-Xa · protamina revierte solo parcialmente.</div>' +
+'<div>· <b>Fondaparinux</b> → anti-Xa puro. Sin antídoto directo.</div>' +
+'<div>· <b>Warfarina / acenocumarol</b> → inhiben VKORC1:</div>' +
+'<div>&nbsp;&nbsp;↓ factores II, VII, IX, X + proteínas C y S.</div>' +
+'<div>&nbsp;&nbsp;Control INR · antídoto vitamina K + CCP.</div>' +
+'<div>· <b>Rivaroxabán / apixabán / edoxabán</b> → inhiben Xa directo.</div>' +
+'<div>&nbsp;&nbsp;Antídoto andexanet alfa (o CCP si no hay).</div>' +
+'<div>· <b>Dabigatrán</b> → inhibe IIa (trombina) directo.</div>' +
+'<div>&nbsp;&nbsp;Antídoto idarucizumab.</div>' +
+'<div>· <b>Argatrobán / bivalirudina</b> → inhiben IIa directo.</div>' +
+'<div>&nbsp;&nbsp;De elección en la HIT.</div>' +
+'<div><br></div>' +
+'<div><b>Para no olvidar</b></div>' +
+'<div>· Vitamina K = factores 1972 (X, IX, VII, II) + PC y PS.</div>' +
+'<div>· El VII tiene la vida media más corta (~6h): el INR sube antes de</div>' +
+'<div>&nbsp;&nbsp;que haya anticoagulación real.</div>' +
+'<div>· Al inicio de la warfarina cae antes la proteína C → estado</div>' +
+'<div>&nbsp;&nbsp;protrombótico transitorio (necrosis cutánea) → puentear con</div>' +
+'<div>&nbsp;&nbsp;heparina ≥5 días y hasta INR en rango 2 días seguidos.</div>',
+
+// ---- página 3 ----
+'<div><b>ANTICOAGULANTES</b></div>' +
+'<div>mecanismo · indicaciones · dosis · contraindicaciones</div>' +
+'<div><br></div>' +
+'<div><b>HNF</b> — antitrombina (IIa = Xa)</div>' +
+'<div>Bolo 80 U/kg + perfusión 18 U/kg/h; TTPa 1.5-2.5x basal.</div>' +
+'<div>Útil si: insuficiencia renal grave, alto riesgo de sangrado,</div>' +
+'<div>periprocedimiento (vida media corta, reversible).</div>' +
+'<div>CI: HIT previa, sangrado activo.</div>' +
+'<div><br></div>' +
+'<div><b>Enoxaparina</b> — HBPM, anti-Xa</div>' +
+'<div>Profilaxis 40 mg/24h SC · Tratamiento 1 mg/kg/12h</div>' +
+'<div>o 1.5 mg/kg/24h. Si ClCr &lt;30: 1 mg/kg/24h.</div>' +
+'<div>CI: ClCr &lt;15 o diálisis (usar HNF), sangrado activo, HIT.</div>' +
+'<div><br></div>' +
+'<div><b>Fondaparinux</b> — anti-Xa puro</div>' +
+'<div>Profilaxis 2.5 mg/24h · Tratamiento 7.5 mg/24h</div>' +
+'<div>(5 mg si &lt;50 kg; 10 mg si &gt;100 kg).</div>' +
+'<div>Alternativa en la HIT. CI: ClCr &lt;30.</div>' +
+'<div><br></div>' +
+'<div><b>Acenocumarol / warfarina</b> — anti-vitamina K</div>' +
+'<div>Objetivo INR 2-3 (2.5-3.5 en válvula mecánica mitral).</div>' +
+'<div>Indicaciones donde el ACOD NO vale: SAF triple positivo,</div>' +
+'<div>válvula mecánica, estenosis mitral moderada-grave.</div>' +
+'<div>CI: embarazo (1er trimestre y periparto). Muchas interacciones.</div>' +
+'<div><br></div>' +
+'<div><b>ACOD</b></div>' +
+'<div>· Apixabán: ETV 10 mg/12h × 7d → 5 mg/12h.</div>' +
+'<div>&nbsp;&nbsp;FA 5 mg/12h (2.5 si 2 de 3: ≥80a, ≤60 kg, Cr ≥1.5).</div>' +
+'<div>· Rivaroxabán: 15 mg/12h × 21d → 20 mg/24h con comida.</div>' +
+'<div>· Edoxabán: 60 mg/24h tras ≥5 días de heparina</div>' +
+'<div>&nbsp;&nbsp;(30 mg si ClCr 15-50, ≤60 kg o inhibidor de P-gp).</div>' +
+'<div>· Dabigatrán: 150 mg/12h tras ≥5 días de heparina.</div>' +
+'<div>CI comunes: SAF triple +, válvula mecánica, estenosis mitral</div>' +
+'<div>moderada-grave, embarazo/lactancia, ClCr muy bajo.</div>' +
+'<div><br></div>' +
+'<div><b>En el paciente onco-hematológico</b></div>' +
+'<div>· ETV asociada a cáncer: HBPM o ACOD (apixabán, edoxabán,</div>' +
+'<div>&nbsp;&nbsp;rivaroxabán). Cuidado con tumores GI/GU no resecados.</div>' +
+'<div>· Trombopenia: &gt;50k dosis plena · 25-50k individualizar o</div>' +
+'<div>&nbsp;&nbsp;reducir · &lt;25k suspender y valorar filtro de cava si TEV</div>' +
+'<div>&nbsp;&nbsp;muy reciente.</div>' +
+'<div>· HIT: suspender TODA heparina (también los lavados de vía) →</div>' +
+'<div>&nbsp;&nbsp;argatrobán o fondaparinux. Nunca dejar solo antiagregado.</div>',
+
+// ---- página 4 ----
+'<div><b>ANTIAGREGANTES</b></div>' +
+'<div>mecanismo · indicaciones · dosis · contraindicaciones</div>' +
+'<div><br></div>' +
+'<div><b>AAS</b> — inhibe COX-1 irreversible → ↓ tromboxano A2</div>' +
+'<div>75-100 mg/24h (carga 250-300 mg en el SCA).</div>' +
+'<div>Prevención secundaria CV, SCA, ictus isquémico.</div>' +
+'<div>Efecto durante toda la vida de la plaqueta (7-10 días).</div>' +
+'<div>CI: alergia, sangrado activo, úlcera péptica activa.</div>' +
+'<div><br></div>' +
+'<div><b>Clopidogrel</b> — bloquea P2Y12, irreversible</div>' +
+'<div>Profármaco: necesita CYP2C19 (mala respuesta si alelo perdedor;</div>' +
+'<div>ojo con omeprazol, mejor pantoprazol).</div>' +
+'<div>Carga 300-600 mg → 75 mg/24h. Suspender 5 días antes de cirugía.</div>' +
+'<div><br></div>' +
+'<div><b>Prasugrel</b> — P2Y12 irreversible, más potente y rápido</div>' +
+'<div>Carga 60 mg → 10 mg/24h (5 mg si &gt;75 años o &lt;60 kg).</div>' +
+'<div>CI: ictus o AIT previo. Suspender 7 días.</div>' +
+'<div><br></div>' +
+'<div><b>Ticagrelor</b> — P2Y12 reversible, no es profármaco</div>' +
+'<div>Carga 180 mg → 90 mg/12h. Suspender 3-5 días.</div>' +
+'<div>Efectos: disnea, pausas/bradicardia, ↑ ácido úrico.</div>' +
+'<div>No asociar con AAS a dosis &gt;100 mg/24h.</div>' +
+'<div><br></div>' +
+'<div><b>Inhibidores GP IIb/IIIa</b> — abciximab, tirofibán, eptifibatida</div>' +
+'<div>Bloquean la vía final de la agregación. IV, en ICP o alta carga</div>' +
+'<div>trombótica. Pueden dar trombopenia aguda grave (vigilar a las 2-4h).</div>' +
+'<div><br></div>' +
+'<div><b>Doble antiagregación (DAPT)</b></div>' +
+'<div>AAS + inhibidor P2Y12; la duración depende del stent y del SCA.</div>' +
+'<div>Nunca suspender por cuenta propia tras un stent reciente:</div>' +
+'<div>consultar SIEMPRE con cardiología.</div>' +
+'<div><br></div>' +
+'<div><b>En el paciente onco-hematológico</b></div>' +
+'<div>· No hay antídoto: si sangrado grave → transfusión de plaquetas</div>' +
+'<div>&nbsp;&nbsp;(poco eficaz con ticagrelor, porque circula libre y bloquea</div>' +
+'<div>&nbsp;&nbsp;también las plaquetas transfundidas).</div>' +
+'<div>· Umbrales orientativos con trombopenia: AAS suele mantenerse</div>' +
+'<div>&nbsp;&nbsp;con &gt;10-20k; la DAPT requiere &gt;30-50k. Individualizar.</div>' +
+'<div>· Si hay que hacer un procedimiento, valorar riesgo trombótico</div>' +
+'<div>&nbsp;&nbsp;del stent frente al hemorrágico: decisión conjunta.</div>'
+];
+
+function isBlankNotebook(arr){
+  return !arr || !arr.some(p => (p||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim().length);
+}
+
 // ---------- estado ----------
 function load(){
   try{
@@ -30,11 +204,13 @@ function load(){
       if(Array.isArray(data.pages) && data.pages.length){
         pages = data.pages;
         pos = Math.max(0, data.pos|0);
+        // libreta creada pero aún sin escribir nada → sembrar contenido
+        if(isBlankNotebook(pages)){ pages = NB_SEED.slice(); pos = 0; save(true); }
         return;
       }
     }
   }catch(e){}
-  pages = ['', '', '', ''];
+  pages = NB_SEED.slice();
   pos = 0;
 }
 let saveTimer = null;
