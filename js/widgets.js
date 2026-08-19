@@ -191,3 +191,41 @@ function buildPicker(host){
   panel.innerHTML = data.items[0].html;
   panel.classList.add('pk-in');
 }
+
+/* ---------------------------------------------------------
+   PLANTILLAS COPIABLES
+   Uso en el contenido:
+   <div class="tpl-box">
+     <div class="tpl-head">Título
+       <button class="tpl-copy" onclick="copiarPlantilla(this)">copiar</button></div>
+     <pre class="tpl-text">…texto…</pre>
+   </div>
+   --------------------------------------------------------- */
+function copiarPlantilla(btn){
+  const box = btn.closest('.tpl-box');
+  if(!box) return;
+  const el = box.querySelector('.tpl-text');
+  if(!el) return;
+  const txt = el.innerText;
+  const original = btn.textContent;
+  const ok = ()=>{
+    btn.textContent = '✓ copiado';
+    btn.classList.add('is-ok');
+    setTimeout(()=>{ btn.textContent = original; btn.classList.remove('is-ok'); }, 1700);
+  };
+  const fallback = ()=>{
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); ok(); }catch(e){ btn.textContent = 'no se pudo copiar'; }
+    ta.remove();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(ok).catch(fallback);
+  }else{
+    fallback();
+  }
+}
