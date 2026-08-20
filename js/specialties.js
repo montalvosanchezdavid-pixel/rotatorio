@@ -5,6 +5,7 @@
 //   short → pestaña superior · label → nombre completo (tooltip y panel)
 // =============================================================
 registerSpecialty({ id:'urgencias',   short:'URG',  label:'Urgencias',       tree:URG_TREE });
+registerSpecialty({ id:'endocrino',   short:'END',  label:'Endocrino',       tree:ENDO_TREE });
 registerSpecialty({ id:'nefrologia',  short:'NEF',  label:'Nefrología',      tree:NEFRO_TREE });
 registerSpecialty({ id:'cardiologia', short:'CAR',  label:'Cardiología',     tree:CARDIO_TREE });
 registerSpecialty({ id:'neumologia',  short:'NML',  label:'Neumología',      tree:NEUMO_TREE });
